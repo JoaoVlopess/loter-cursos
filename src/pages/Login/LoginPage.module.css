@@ -1,0 +1,101 @@
+.container{
+    width: 100vw;
+    height: 100vh;
+    padding: 2rem;
+    background-color: #2f2f2f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login_area{
+    max-width: 700px;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+    color: #fff;
+}
+
+.login_area img{
+    max-width: 100px;
+    max-height: 100px;
+    scale: 2;
+    margin-bottom: 2rem;
+}
+
+.login_area h1{
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 100;
+    cursor: default;
+}
+
+.login_area_cadastro{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 3rem;
+}
+
+.login_area_cadastro p{
+    color: #aaa;
+    cursor: default;
+}
+
+.login_area_cadastro a{
+    color: #ddd;
+}
+
+.login_area_input {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.login_area_input input {
+  background-color: #1c1c1e;
+  color: #fff;
+  border: 1px solid #2c2c2e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login_area_input input::placeholder {
+  color: #a0a0a0;
+}
+
+.login_area_input input:focus {
+  border-color: #666;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+
+.signin_button {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  border: 1px solid #ffffff;
+  width: 100%;
+  max-width: 320px;
+  align-self: center;
+}
+
+.signin_button:hover {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
