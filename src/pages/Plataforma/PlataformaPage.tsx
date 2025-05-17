@@ -5,7 +5,7 @@ export const PlataformaPage = () => {
 return (
     <>
     <NavBar />
-    
+
     <Footer/>
     </>
 );
