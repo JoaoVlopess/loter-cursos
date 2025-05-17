@@ -2,7 +2,6 @@
     width: 100vw;
     height: 100vh;
     padding: 2rem;
-    background-color: #2f2f2f;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,7 +20,7 @@
 .login_area img{
     max-width: 100px;
     max-height: 100px;
-    scale: 2;
+    scale: 2.8;
     margin-bottom: 2rem;
 }
 

@@ -1,7 +1,12 @@
+import { Footer } from "../../components/Footer/Footer";
+import { NavBar } from "../../components/NavBar/Navbar";
+
 export const PlataformaPage = () => {
 return (
     <>
-    <h1>ola3</h1>
+    <NavBar />
+    
+    <Footer/>
     </>
 );
 }

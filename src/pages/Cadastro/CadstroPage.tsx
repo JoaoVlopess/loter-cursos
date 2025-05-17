@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export function CadastroPage() {
   return (
     <div className={styles.container}>
-      <img src="/public/img/loter_Logo.png" alt="Logo Loter" />
+      <img src="/img/loter_Logo.png" alt="Logo Loter" />
 
       <h1>Crie sua conta</h1>
       <p>
