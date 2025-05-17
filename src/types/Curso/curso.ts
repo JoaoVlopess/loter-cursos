@@ -1,4 +1,4 @@
-import type { Professor } from "../Clientes/professor";
+// import type { Professor } from "../Clientes/professor";
 
 export type Curso = {
   id_curso: number;
@@ -6,5 +6,5 @@ export type Curso = {
   descricao: string;
   carga_horaria: number;
   id_professor: number;
-  professor?: Professor;
+  // professor?: Professor;
 };
