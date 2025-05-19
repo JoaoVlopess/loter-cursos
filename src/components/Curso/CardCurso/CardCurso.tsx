@@ -12,9 +12,9 @@ type Props = {
 export const CardCurso = ({ curso }: Props) => {
   return (
     <div className={styles.course_card}>
-      <div className={styles.course_plus}>
-        <IoMdInformationCircleOutline />
-        <SlOptionsVertical />
+      <div className={styles.course_plus}>        
+        <IoMdInformationCircleOutline className={styles.info_icon} />
+        <SlOptionsVertical  className={styles.points_icon}/>
       </div>
 
       <div className={styles.course_img}>

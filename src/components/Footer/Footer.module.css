@@ -1,0 +1,11 @@
+.footer_area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 15%;
+  background-color: #242424;
+  max-height: 130px;
+  color: #aaa;
+  cursor: default;
+  font-size: 13px;
+}
