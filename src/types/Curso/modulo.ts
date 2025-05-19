@@ -1,3 +1,4 @@
+import type { Aula } from "./aula";
 import type { Curso } from "./curso";
 
 export type Modulo = {
@@ -6,5 +7,6 @@ export type Modulo = {
   titulo: string;
   ordem: number;
   descricao: string;
+  aulas: Aula[];
   curso?: Curso;
 };

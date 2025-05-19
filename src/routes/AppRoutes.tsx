@@ -4,7 +4,7 @@ import { CadastroPage } from "../pages/Cadastro/CadstroPage";
 import { PlataformaPage } from "../pages/Plataforma/PlataformaPage";
 import { CursoLayout } from "../pages/Curso/CursoLayout";
 import { NotFoundPage } from "../pages/NotFoundPage/NotFoundPage";
-import AulaPage from "../pages/Curso/AulaPage";
+import { AulaPage } from "../pages/Curso/AulaPage";
 
 export default function AppRoutes() {
   return useRoutes([

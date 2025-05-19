@@ -1,16 +1,17 @@
+// CursoLayout.tsx
+import { SidebarCurso } from "../../components/Curso/SidebarCurso/SidebarCurso";
 import { Outlet, useParams } from "react-router-dom";
-// import SidebarCurso from "../../components/SidebarCurso";
+import styles from "./CursoLayout.module.css";
 
-export function CursoLayout() {
+export const CursoLayout = () => {
   const { cursoId } = useParams();
-  console.log(cursoId);
 
   return (
-    <div className="flex h-screen">
-      {/* <SidebarCurso cursoId={cursoId!} /> */}
-      <main className="flex-1 bg-gray-100 overflow-y-auto p-6">
+    <div className={styles.layout}>
+      <main className={styles.content}>
         <Outlet />
       </main>
+      <SidebarCurso cursoId={cursoId!} />
     </div>
   );
-}
+};
