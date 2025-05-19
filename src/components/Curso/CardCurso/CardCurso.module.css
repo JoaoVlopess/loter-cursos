@@ -1,15 +1,14 @@
 .course_card{
     background-color: #aaa;
-    max-width: 500px;
-    max-height: 300px;
+    max-width: 600px;
+    max-height: 500px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    text-align: center;
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.course_info{
+.course_plus{
     display: flex;
     justify-content: end;
     align-items: center;
@@ -18,9 +17,45 @@
 }
 
 
-
 .course_img img{
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.course_info_1{
+    padding: 5px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.course_info_1_titulo{
+    font-weight: 600;
+}
+
+.course_info_1_text{
+    display: flex;
+    gap: 15px;
+}
+
+.info_1_text_item{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+}
+
+.course_info_2{
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+}
+
+.line{
+    width: 100%;
+    height: 1px;
+    background-color: #bbb;
 }
