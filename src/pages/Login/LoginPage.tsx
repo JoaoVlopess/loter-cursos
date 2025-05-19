@@ -1,23 +1,18 @@
-import styles from "./LoginPage.module.css";
-import { Link } from 'react-router-dom';
+import styles from './LoginPage.module.css';
+import { Logo } from '../../components/Logo/Logo';
 
+import { RedirectMessage } from '../../components/RedirectMessage/RedirectMessage';
+import { LoginForm } from '../../components/LoginForm/LoginForm';
 
 export const LoginPage = () => {
-    return (
-        <div className={styles.container}>
-            <div className={styles.login_area}>
-                <img src="/img/loter_Logo.png" alt="Logo Loter" />
-                <h1 className={styles.login_area_titulo}>Bem vindo de volta, dev!</h1>
-                <div className={styles.login_area_cadastro}>
-                    <p>Chegando pela primeira vez?</p>
-                    <a><Link to="/cadastro" >Cadastre-se!</Link></a>
-                </div>
-                <div className={styles.login_area_input}>
-                    <input type="email" placeholder="Seu email" />
-                    <input type="password" placeholder="********" />
-                </div>
-                <button className={styles.signin_button}><Link to="/home" >Cadastre-se!</Link></button>
-            </div>
-        </div>
-    );
-}
+  return (
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <Logo />
+        <h1>Bem vindo de volta, dev!</h1>
+        <RedirectMessage question="Chegando pela primeira vez?" linkText="Cadastre-se!" linkTo="/cadastro" />
+        <LoginForm />
+      </div>
+    </div>
+  );
+};

@@ -1,5 +1,5 @@
-import { CardCurso } from "../CardCurso/CardCurso";
-import type { Curso } from "../../types/Curso/curso";
+import { CardCurso } from "../../Curso/CardCurso/CardCurso";
+import type { Curso } from "../../../types/Curso/curso";
 import styles from "./CursoGrid.module.css";
 
 const cursos: Curso[] = [

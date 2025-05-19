@@ -1,7 +1,9 @@
+import styles from './Navbar.module.css';
 export const NavBar = () => {
 return (
-    <>
-    <h1>ola4</h1>
-    </>
+    <div className={styles.navbar_area}>
+        <img src="/img/Loter_Logo_Aba.png" alt="Logo Loter" />
+        
+    </div>
 );
 }

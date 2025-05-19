@@ -1,6 +1,7 @@
+import { CursoGrid } from "../../components/Curso/CursoGrid/CursoGrid";
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
-import { CursoGrid } from "../../components/CursoGrid/CursoGrid";
+
 import styles from "./PlataformaPage.module.css";
 
 export const PlataformaPage = () => {
