@@ -6,5 +6,6 @@ export type Curso = {
   descricao: string;
   carga_horaria: number;
   id_professor: number;
+  modulos: number;
   // professor?: Professor;
 };
