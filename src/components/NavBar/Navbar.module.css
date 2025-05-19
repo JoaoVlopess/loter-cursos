@@ -1,11 +1,72 @@
 .navbar_area {
-    display: flex;
-    align-items: center;
-    padding: 1rem 15%;
-    background-color: #201e1e;
-    max-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 15%;
+  background-color: #201e1e;
+  max-height: 130px;
 }
+
 .navbar_area img {
   max-width: 70px;
   max-height: 70px;
+}
+
+.profile_area {
+  position: relative;
+}
+
+.profile_button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.avatar {
+  background-color: purple;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.username {
+  font-weight: 500;
+}
+
+.arrow {
+  font-size: 0.7rem;
+}
+
+.dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 6px;
+  width: 200px;
+  z-index: 1000;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown_item {
+  padding: 10px 16px;
+  color: white;
+  text-decoration: none;
+  display: block;
+  border-bottom: 1px solid #444;
+  transition: background 0.2s;
+}
+
+.dropdown_item:hover {
+  background-color: #3a3a3a;
 }
