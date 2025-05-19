@@ -1,0 +1,48 @@
+/* SidebarCurso.module.css */
+.sidebar {
+  width: 350px;
+  background-color: #242424;
+  color: white;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 4.5rem;
+  margin-bottom: 2rem;
+}
+
+span {
+  font-size: 1.3rem;
+  color: #aaa;
+}
+
+.nav a {
+  display: block;
+  margin-bottom: 1rem;
+  color: white;
+  text-decoration: none;
+
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+.aulaLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  text-decoration: none;
+  color: white;
+  transition: background 0.2s;
+  font-size: 1rem;
+}
+
+.aulaLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}

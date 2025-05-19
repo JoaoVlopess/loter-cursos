@@ -1,13 +1,13 @@
-import { useParams } from 'react-router-dom';
+// AulaPage.tsx
+import { useParams } from "react-router-dom";
 
-export default function AulaPage() {
+export const AulaPage = () => {
   const { cursoId, aulaId } = useParams();
 
   return (
     <div>
-      <h1>Curso: {cursoId}</h1>
-      <h2>Aula: {aulaId}</h2>
-
+      <h1>Aula {aulaId} do Curso {cursoId}</h1>
+      <p>Conteúdo da aula {aulaId}...</p>
     </div>
   );
-}
+};
