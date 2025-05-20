@@ -34,7 +34,7 @@ const cursos: Curso[] = [
     carga_horaria: 12,
     id_professor: 1,
     modulos: 5
-  },{
+  }, {
     id_curso: 5,
     titulo: "Fundamentos de React",
     descricao: "Aprenda os conceitos básicos do React, como componentes, props e estado.",
@@ -46,10 +46,15 @@ const cursos: Curso[] = [
 
 export const CursoGrid = () => {
   return (
-    <div className={styles.course_grid}>
-      {cursos.map((curso) => (
-        <CardCurso key={curso.id_curso} curso={curso} />
-      ))}
+    <div className={styles.container}>
+      <div className={styles.wrapper}>
+        <h2 className={styles.title}>Meus Cursos</h2>
+        <div className={styles.course_grid}>
+          {cursos.map((curso) => (
+            <CardCurso key={curso.id_curso} curso={curso} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
