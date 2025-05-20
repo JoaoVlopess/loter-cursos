@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dist": "tsup src",
-    "start": "node --import=tsx --watch ./src/Server.ts",
+    "start": "node --import=tsx --watch ./src/server.ts",
     "lint": "eslint src/*/.ts",
     "start:dist": "npm run dist && node dist/src/server.ts",
     "build": "tsc"
