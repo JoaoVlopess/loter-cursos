@@ -6,43 +6,75 @@
   padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
-.title {
-  font-size: 4.5rem;
-  margin-bottom: 2rem;
+.modulo {
+  margin-bottom: 1rem;
 }
 
-span {
-  font-size: 1.3rem;
+.moduloButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+  font-size: 1.1rem;
+  gap: 0.5rem;
+}
+
+.moduloButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.moduloNumero {
+  font-size: 1.1rem;
   color: #aaa;
 }
 
-.nav a {
-  display: block;
-  margin-bottom: 1rem;
-  color: white;
-  text-decoration: none;
-
+.moduloTitulo {
+  flex-grow: 1;
 }
 
-.nav a:hover {
-  text-decoration: underline;
+.aulaLista {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.aulaItem {
+  list-style: none;
+  margin-bottom: 0.25rem;
 }
 
 .aulaLink {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
+  gap: 0.75rem; /* Espaçamento consistente entre ícone e texto */
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem; /* Alinhamento visual com os títulos */
   text-decoration: none;
   color: white;
-  transition: background 0.2s;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  border-radius: 4px;
 }
 
 .aulaLink:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+}
+
+.playIcon {
+  font-size: 0.9rem;
+  min-width: 1rem; /* Largura fixa */
+  color: #aaa;
+  flex-shrink: 0; /* Impede que o ícone diminua */
+}
+
+.duracao {
+  margin-left: auto; /* Joga a duração para a direita */
+  font-size: 0.8rem;
+  color: #777;
+  padding-left: 0.5rem;
 }
