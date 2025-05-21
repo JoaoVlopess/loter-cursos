@@ -1,14 +1,13 @@
-import express from 'express'
+import { Router } from 'express';
+import authRoutes from './auth.routes';
 
-const router= express.Router();
+const router = Router();
 
-// Rota de teste para a raiz
 router.get('/', (req, res) => {
   res.send('API Plataforma Cursos rodando!');
 });
 
-router.get('/ping', (req, res) => {
-    res.json({ pong: true });
-});
+
+router.use(authRoutes); // monta /cadastro e /login na raiz
 
 export default router;

@@ -1,34 +1,32 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
-import rotaUsuarioTeste from './Routes/usuarioTeste.routes'; // <-- IMPORTAR ISSO
-import { pool, testConnection } from './database';
+import cors from 'cors';
+import rotas from './routes';            // certifique-se de usar "./routes"
+import { testConnection } from './database';
 
 const server = express();
 
-// Middlewares essenciais
 server.use(helmet());
+server.use(cors());
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
-// Middleware de verificação do banco
-server.use(async (req, res, next) => {
-  try {
-    await testConnection();
-    next();
-  } catch {
-    res.status(503).json({ 
-      error: 'Serviço indisponível',
-      message: 'Banco de dados offline'
-    });
+// health-check do DB
+server.use(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await testConnection();
+      next();
+    } catch {
+      res.status(503).json({ error: 'Banco de dados indisponível' });
+    }
   }
-});
+);
 
-// Rotas sem prefixo
-server.use('/', rotaUsuarioTeste); // <-- ADICIONE ISSA LINHA
+// monta todas as rotas
+server.use(rotas);
 
-// Inicia servidor
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, async () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-  await testConnection();
-});
+server.listen(PORT, () =>
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`)
+);
