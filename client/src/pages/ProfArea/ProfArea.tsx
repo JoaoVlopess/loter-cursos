@@ -1,14 +1,11 @@
 import { CursoGrid } from "../../components/Curso/CursoGrid/CursoGrid";
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
+import { ProfessorCard } from "../../components/Professor/ProfessorCard/ProfessorCard";
 import { Curso } from "../../types/Curso/curso";
-import { CardCurso } from '../../components/Curso/CardCurso/CardCurso';
 
-import styles from "./PlataformaPage.module.css";
+import styles from "../ProfArea/ProfArea.module.css";
 
-
-// PlataformaPage.tsx (arquivo separado)
-export const PlataformaPage = () => {
   const cursos: Curso[] = [
   {
     id_curso: 1,
@@ -34,27 +31,16 @@ export const PlataformaPage = () => {
     id_professor: 1,
     modulos: 5
   },
-  {
-    id_curso: 4,
-    titulo: "Fundamentos de React",
-    descricao: "Aprenda os conceitos básicos do React, como componentes, props e estado.",
-    carga_horaria: 12,
-    id_professor: 1,
-    modulos: 5
-  }, {
-    id_curso: 5,
-    titulo: "Fundamentos de React",
-    descricao: "Aprenda os conceitos básicos do React, como componentes, props e estado.",
-    carga_horaria: 12,
-    id_professor: 1,
-    modulos: 5
-  },
 ];
+
+export const ProfArea = () => {
+
+  
   return (
-    <div className={styles.plataforma_page}>
+    <div className={styles.profArea_page}>
       <NavBar />
       <div className={styles.main_content}>
-        <CursoGrid cursos={cursos} CardComponent={CardCurso} />
+        <CursoGrid cursos={cursos} CardComponent={ProfessorCard} titulo="Cursos do Professor" />
       </div>
       <Footer />
     </div>
