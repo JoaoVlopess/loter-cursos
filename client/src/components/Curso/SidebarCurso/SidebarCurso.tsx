@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { FaChevronDown, FaChevronRight, FaPlayCircle } from "react-icons/fa";
+import { FaChevronDown, FaChevronRight, FaRegPlayCircle  } from "react-icons/fa";
 import { Link,  } from "react-router-dom";
-import styles from "./SidebarCurso.module.css";
+import styles from "../SidebarCurso/SidebarCurso.module.css";
 import type { Modulo } from "../../../types/Curso/modulo";
 
 // Formata segundos para "mm:ss"
@@ -42,7 +42,7 @@ const formatDuracao = (segundos: number) => {
         ordem: 3,
         conteudo: "Visão geral do HTTP 1, cabeçalhos, métodos e exemplos de requisições.",
         duracao: 704
-      }
+      },
     ]
   },
   {
@@ -89,8 +89,8 @@ export function SidebarCurso({ cursoId }: Props) {
       {modulos.map((modulo) => (
         <div key={modulo.id_modulo} className={styles.modulo}>
           <button onClick={() => toggleModulo(modulo.id_modulo)} className={styles.moduloButton}>
-            <span className={styles.moduloNumero}>{modulo.ordem}</span>
-            <span className={styles.moduloTitulo}>{modulo.titulo}</span>
+            <span className={styles.moduloNumero}>{modulo.ordem}. </span>
+            <span className={styles.moduloTitulo}>{modulo.titulo} </span>
             {moduloAberto === modulo.id_modulo ? <FaChevronDown /> : <FaChevronRight />}
           </button>
 
@@ -102,7 +102,7 @@ export function SidebarCurso({ cursoId }: Props) {
                     to={`/curso/${cursoId}/aula/${aula.id_aula}`}
                     className={styles.aulaLink}
                   >
-                    <FaPlayCircle className={styles.playIcon} />
+                    <FaRegPlayCircle  className={styles.playIcon} />
                     <span>{aula.titulo}</span>
                     <span className={styles.duracao}>{formatDuracao(aula.duracao)}</span>
                   </Link>

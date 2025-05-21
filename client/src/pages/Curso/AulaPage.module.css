@@ -1,0 +1,147 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  color: white;
+  height: 100vh;
+  padding: 0rem 2rem;
+
+}
+
+.videoWrapper {
+  width: 90%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 2rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+
+}
+
+
+.videoPlayer {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+}
+
+.info {
+  text-align: start;
+  align-self: start;
+}
+
+.info h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button:hover {
+  background-color: #1d4ed8;
+}
+
+.description{
+    text-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.comments {
+  width: 90%;
+  max-width: 960px;
+  margin-top: 2rem;
+}
+
+.comments label {
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: white;
+}
+
+.comments textarea {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none; /* Isso desabilita o redimensionamento */
+  min-height: 100px; /* Altura fixa */
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.comments textarea:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px #1e40af, 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Placeholder estilizado */
+.comments textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+}
+
+
+.rating {
+  width: 100%;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.rating h3 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.stars {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.starButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 2rem;
+  transition: transform 0.2s;
+}
+
+.starButton:hover {
+  transform: scale(1.1);
+}
+
+.starFilled {
+  color: #FFD700; /* Cor das estrelas preenchidas */
+}
+
+.starEmpty {
+  color: #ccc; /* Cor das estrelas vazias */
+}
+
+.ratingText {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.5rem;
+}

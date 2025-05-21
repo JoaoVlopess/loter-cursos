@@ -1,4 +1,4 @@
-import styles from './LoginForm.module.css';
+import styles from '../LoginForm/LoginForm.module.css';
 import { InputField } from '../InputField/InputField';
 import { FormButton } from '../FormButton/FormButton';
 import { Link } from 'react-router-dom';
