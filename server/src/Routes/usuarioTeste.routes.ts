@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../database';
 import { ResultSetHeader } from 'mysql2';
 
+
 const router = Router();
 
 // Interface para tipagem clara
@@ -63,5 +64,15 @@ router.post('/usuario-teste', async (req, res) => {
         });
     }
 });
+
+router.get('/teste-conexao', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT 1');
+        res.status(200).json({ success: true, message: 'Conexão bem-sucedida!' });
+    } catch (error) {
+        res.status(500).json({ success: false, error });
+    }
+});
+
 
 export default router;

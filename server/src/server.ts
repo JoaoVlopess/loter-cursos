@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
-import router from './Routes';
+import rotasPrincipais from './Routes';
+import rotaUsuarioTeste from './Routes/usuarioTeste.routes'; // <-- IMPORTAR ISSO
 import { pool, testConnection } from './database';
 
 const server = express();
@@ -23,8 +24,9 @@ server.use(async (req, res, next) => {
   }
 });
 
-// Rotas
-server.use('/', router);
+// Rotas sem prefixo
+server.use('/', rotasPrincipais);
+server.use('/', rotaUsuarioTeste); // <-- ADICIONE ISSA LINHA
 
 // Inicia servidor
 const PORT = process.env.PORT || 3000;

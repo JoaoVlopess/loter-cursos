@@ -1,6 +1,7 @@
 import express from 'express'
 
 
+
 const router= express.Router();
 
 // Rota de teste para a raiz
