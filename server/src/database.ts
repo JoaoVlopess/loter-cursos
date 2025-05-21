@@ -6,10 +6,10 @@ dotenv.config();
 
 // Configurações padrão para XAMPP
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || '', // Senha vazia é padrão no XAMPP
-  database: process.env.DB_NAME || 'plataforma',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
   waitForConnections: true,
   connectionLimit: 10, // Número máximo de conexões no pool
