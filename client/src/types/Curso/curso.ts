@@ -1,6 +1,6 @@
 // import type { Professor } from "../Clientes/professor";
 
-export type Curso = {
+export  type Curso = {
   id_curso: number;
   titulo: string;
   descricao: string;

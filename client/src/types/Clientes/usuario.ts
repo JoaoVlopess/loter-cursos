@@ -4,5 +4,7 @@ export type Usuario = {
   email: string;
   senha: string;
   ativo: boolean;
-  tipo: 'aluno' | 'professor' | 'admin';
+  data_nascimento: Date;
+  tipo: 'ALUNO' | 'PROFESSOR' | 'ADMIN';
+
 };
