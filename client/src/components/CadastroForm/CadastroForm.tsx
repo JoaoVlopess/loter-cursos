@@ -75,7 +75,7 @@ export const CadastroForm = () => {
 
       const response = await axios.post(`${API_URL_BASE}${ENDPOINT_CADASTRO}`, userDataToSubmit);
 
-      setMessage(`Usuário cadastrado com sucesso! ID: ${response.data.id_usuario}`);
+      setMessage(`Aluno cadastrado com sucesso!`);
       setIsLoading(false);
       // Limpar formulário 
       setFormData({ nome: '', cpf: '', email: '', senha: '', idade: ''  });
@@ -96,37 +96,51 @@ export const CadastroForm = () => {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
+      <label htmlFor="nome" className={styles.label}>Nome Completo</label>
       <InputField
         type="text"
         placeholder="Seu nome"
+        id="nome"
         name="nome" // Essencial para o handleChange
         value={formData.nome} // Vincula ao estado
         onChange={handleChange} // Atualiza o estado
       />
-        <InputField
+
+      <label htmlFor="cpf" className={styles.label}>CPF</label>
+      <InputField
         type="text" 
         placeholder="Seu CPF (somente números)"
+        id="cpf"
         name="cpf" 
         value={formData.cpf} 
         onChange={handleChange} 
       />
+
+      <label htmlFor="email" className={styles.label}>Email</label>
       <InputField
         type="email"
         placeholder="Seu email"
+        id="email"
         name="email"
         value={formData.email}
         onChange={handleChange}
       />
+
+      <label htmlFor="senha" className={styles.label}>Senha</label>
       <InputField
         type="password"
         placeholder="Senha"
+        id="senha"
         name="senha"
         value={formData.senha}
         onChange={handleChange}
       />
+
+      <label htmlFor="idade" className={styles.label}>Idade</label>
       <InputField
         type="number"
         placeholder="Idade"
+        id="idade"
         name="idade"
         value={formData.idade}
         onChange={handleChange}
@@ -138,7 +152,6 @@ export const CadastroForm = () => {
 
       {/* Feedback para o usuário */}
       {message && <p className={styles.successMessage}>{message}</p>}
-      {error && <p className={styles.errorMessage}>{error}</p>}
     </form>
   );
-};
+}

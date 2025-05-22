@@ -7,49 +7,54 @@ import { NotFoundPage } from "../pages/NotFoundPage/NotFoundPage";
 import { AulaPage } from "../pages/Curso/AulaPage";
 import { ProfArea } from "../pages/ProfArea/ProfArea";
 import { ProfessorEditPage } from "../pages/ProfessorEditPage/ProfessorEditPage";
+import { ProtectedRoute } from "../components/ProtectedRoute/ProtectedRoute";
 // import { useUser } from "../hooks/userUser";
 // import { ProfessorCursosPage } from "../pages/Professor/ProfessorCursosPage";
 // import { ProfessorCursoPage } from "../pages/Professor/ProfessorCursoPage";
 
-export default function AppRoutes() {
-  // const user = useUser();
-
-  return useRoutes([
+export default function AppRoutes() { 
+return useRoutes([
     { path: '/', element: <LoginPage /> },
     { path: '/cadastro', element: <CadastroPage /> },
-    { path: '/home', element: <PlataformaPage /> },
 
+    // Rotas protegidas para qualquer usuário autenticado
     {
-      path: '/curso/:cursoId',
-      element: <CursoLayout />,
+      element: <ProtectedRoute />,
       children: [
-        { path: 'aula/:aulaId', element: <AulaPage /> },
-        { index: true, element: <Navigate to="aula/1" replace /> },
-      ]
+        { path: '/home', element: <PlataformaPage /> },
+        {
+          path: '/curso/:cursoId',
+          element: <CursoLayout />,
+          children: [
+            { path: 'aula/:aulaId', element: <AulaPage /> },
+            { index: true, element: <Navigate to="aula/1" replace /> },
+          ],
+        },
+        // Adicione outras rotas aqui que devem ser acessíveis
+        // por qualquer usuário autenticado.
+      ],
     },
+
+    // Rotas protegidas especificamente para PROFESSORES
     {
-      path: '/professor',
-      element: <ProfArea />
+      element: <ProtectedRoute allowedTypes={['PROFESSOR']} />,
+      children: [
+        { path: '/professor', element: <ProfArea /> },
+        { path: '/professor/curso/:id', element: <ProfessorEditPage /> },
+        // Adicione outras rotas específicas de professor aqui, se houver.
+        // Exemplo:
+        // {
+        //   path: '/professor/cursos',
+        //   element: <ProfessorCursosPage /> // Certifique-se de importar este componente
+        // },
+      ],
     },
-       {
-      path: '/professor/curso/:id',
-      element: <ProfessorEditPage />
-    },
-    // {
-    //   path: '/professor/curso/:id',
-    //   element: <ProfessorEditPage />
-    // },
 
-    // Rota protegida do professor
-    // {
-    //   path: '/professor/cursos',
-    //   element: user?.tipo === 'PROFESSOR' ? <ProfessorCursosPage /> : <Navigate to="/" replace />,
-    // },
-    // {
-    //   path: '/professor/curso/:id',
-    //   element: user?.tipo === 'PROFESSOR' ? <ProfessorCursoPage /> : <Navigate to="/" replace />,
-    // },
-
-    { path: '*', element: <NotFoundPage /> }
-  ]);
-}
+    // Você pode adicionar mais blocos de ProtectedRoute para outros tipos de usuário,
+    // como 'ADMIN', se necessário.
+    // Exemplo:
+    // { element: <ProtectedRoute allowedTypes={['ADMIN']} />, children: [...] },
+ 
+     { path: '*', element: <NotFoundPage /> }
+   ]);
+  }
