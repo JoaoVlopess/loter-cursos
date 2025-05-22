@@ -9,15 +9,15 @@ import { Usuario } from '../../types/Clientes/usuario';
 
 
 // Tipo para o estado do nosso formulário, baseado no seu tipo Usuario
-type CadastroFormState = Pick<Usuario, 'nome' | 'email' | 'senha'> & {
-  idade: string; 
+type CadastroFormState = Pick<Usuario, 'nome' | 'cpf' | 'email' | 'senha'> & { 
+  idade: string;
 };
-
 
 export const CadastroForm = () => {
 
   const [formData, setFormData] = useState<CadastroFormState>({
     nome: '',
+    cpf: '', 
     email: '',
     senha: '', 
     idade: '',
@@ -45,7 +45,7 @@ export const CadastroForm = () => {
     setError(null);
 
 
-    if (!formData.nome || !formData.email || !formData.senha || !formData.idade) {
+    if (!formData.nome || !formData.cpf || !formData.email || !formData.senha || !formData.idade) {
       setError('Por favor, preencha todos os campos obrigatórios.');
       setIsLoading(false);
       return;
@@ -59,6 +59,7 @@ export const CadastroForm = () => {
     // Montando o payload para o backend
     const userDataToSubmit = {
       nome: formData.nome,
+      cpf: formData.cpf,
       email: formData.email,
       senha: formData.senha, 
       data_nascimento: data_nascimento_str,
@@ -77,7 +78,7 @@ export const CadastroForm = () => {
       setMessage(`Usuário cadastrado com sucesso! ID: ${response.data.id_usuario}`);
       setIsLoading(false);
       // Limpar formulário 
-      setFormData({ nome: '', email: '', senha: '', idade: ''  });
+      setFormData({ nome: '', cpf: '', email: '', senha: '', idade: ''  });
 
     } catch (err: unknown) {
       // Tratamento de erro
@@ -101,6 +102,13 @@ export const CadastroForm = () => {
         name="nome" // Essencial para o handleChange
         value={formData.nome} // Vincula ao estado
         onChange={handleChange} // Atualiza o estado
+      />
+        <InputField
+        type="text" 
+        placeholder="Seu CPF (somente números)"
+        name="cpf" 
+        value={formData.cpf} 
+        onChange={handleChange} 
       />
       <InputField
         type="email"
