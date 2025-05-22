@@ -4,8 +4,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../../config'; 
 
-
-const jwt_secret = process.env.JWT_SECRET!;
 const SALT_ROUNDS = 10;
 
 export const cadastrarUsuario = async (
@@ -66,15 +64,21 @@ export const loginUsuario = async (
     }
 
     const usuario = rows[0];
+
+    console.log('Senha do request (plain text):', senha);
+    console.log('Hash da senha do banco:', usuario.senha); // Verifique se este é um hash válido (string longa)
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    console.log('Resultado da comparação (senhaValida):', senhaValida); // Deve ser true para login sucesso
     if (!senhaValida) {
       res.status(401).json({ success: false, message: 'Credenciais inválidas' });
       return;   // ⬅️ mesma coisa aqui
     }
 
+        // Remova: const jwt_secret = process.env.JWT_SECRET!;
+    // E use o JWT_SECRET importado na linha do jwt.sign:
     const token = jwt.sign(
       { id_usuario: usuario.id_usuario, tipo: usuario.tipo },
-      jwt_secret,
+      JWT_SECRET, // <--- Use o importado de config.ts
       { expiresIn: '2h' }
     );
 
