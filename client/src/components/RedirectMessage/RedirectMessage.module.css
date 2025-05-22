@@ -1,0 +1,13 @@
+.redirect {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 3rem;
+}
+
+.redirect p {
+  color: #aaa;
+}
+
+.redirect a {
+  color: #ddd;
+}

@@ -1,0 +1,32 @@
+/* CursoLayout.module.css */
+.cursolayout{
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Altura total da tela */
+  
+}
+
+.layout {
+  display: flex;
+  max-height: 100vh; /* Subtraia a altura da navbar (ex: 60px) */
+  width: 100%;
+  padding: 2rem 10%;
+    overflow: hidden; /* impede scroll duplicado */
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+    overflow-y: auto; /* scroll geral da página */
+}
+
+/* Supondo que SidebarCurso esteja com largura fixa */
+.sidebar {
+  width: 320px;
+  background-color: #10131a;
+  color: white;
+  padding: 16px;
+  border-left: 1px solid #2e2e2e;
+    overflow-y: auto; /* scroll interno na sidebar */
+}
