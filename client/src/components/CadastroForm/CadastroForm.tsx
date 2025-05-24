@@ -9,7 +9,7 @@ import { Usuario } from '../../types/Clientes/usuario';
 
 
 // Tipo para o estado do nosso formulário, baseado no seu tipo Usuario
-type CadastroFormState = Pick<Usuario, 'nome' | 'cpf' | 'email' | 'senha'> & { 
+type CadastroFormState = Pick<Usuario, 'nome' | 'cpf' | 'email' | 'senha'> & {
   idade: string;
 };
 
@@ -17,13 +17,13 @@ export const CadastroForm = () => {
 
   const [formData, setFormData] = useState<CadastroFormState>({
     nome: '',
-    cpf: '', 
+    cpf: '',
     email: '',
-    senha: '', 
+    senha: '',
     idade: '',
   });
 
- 
+
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -33,13 +33,13 @@ export const CadastroForm = () => {
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: value, 
+      [name]: value,
     }));
   };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setIsLoading(true);
     setMessage(null);
     setError(null);
@@ -54,14 +54,14 @@ export const CadastroForm = () => {
     // Convertendo idade para data_nascimento (string 'YYYY-MM-DD')
     const currentYear = new Date().getFullYear();
     const birthYear = currentYear - parseInt(formData.idade, 10);
-    const data_nascimento_str = `${birthYear}-01-01`; 
+    const data_nascimento_str = `${birthYear}-01-01`;
 
     // Montando o payload para o backend
     const userDataToSubmit = {
       nome: formData.nome,
       cpf: formData.cpf,
       email: formData.email,
-      senha: formData.senha, 
+      senha: formData.senha,
       data_nascimento: data_nascimento_str,
       tipo: 'ALUNO' as Usuario['tipo'], // Definido como ALUNO por padrão
       especialidade: null, // Não relevante para ALUNO
@@ -69,7 +69,7 @@ export const CadastroForm = () => {
     };
 
     try {
-      const API_URL_BASE = 'http://localhost:3000'; 
+      const API_URL_BASE = 'http://localhost:3000';
 
       const ENDPOINT_CADASTRO = '/cadastro';
 
@@ -78,7 +78,7 @@ export const CadastroForm = () => {
       setMessage(`Aluno cadastrado com sucesso!`);
       setIsLoading(false);
       // Limpar formulário 
-      setFormData({ nome: '', cpf: '', email: '', senha: '', idade: ''  });
+      setFormData({ nome: '', cpf: '', email: '', senha: '', idade: '' });
 
     } catch (err: unknown) {
       // Tratamento de erro
@@ -96,62 +96,84 @@ export const CadastroForm = () => {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <label htmlFor="nome" className={styles.label}>Nome Completo</label>
-      <InputField
-        type="text"
-        placeholder="Seu nome"
-        id="nome"
-        name="nome" // Essencial para o handleChange
-        value={formData.nome} // Vincula ao estado
-        onChange={handleChange} // Atualiza o estado
-      />
+      {/* Linha 1: Nome e CPF */}
+      <div className={styles.inputRow}>
+        <div className={styles.inputFieldWrapper}>
+          <label htmlFor="nome" className={styles.label}>Nome Completo</label>
+          <InputField
+            type="text"
+            placeholder="Seu nome"
+            id="nome"
+            name="nome"
+            value={formData.nome}
+            onChange={handleChange}
+          />
+        </div>
+         <div className={styles.inputFieldWrapper}>
+          <label htmlFor="idade" className={styles.label}>Idade</label>
+          <InputField
+            type="number"
+            placeholder="Idade"
+            id="idade"
+            name="idade"
+            value={formData.idade}
+            onChange={handleChange}
+          />
+        </div>
+        
+      </div>
 
-      <label htmlFor="cpf" className={styles.label}>CPF</label>
-      <InputField
-        type="text" 
-        placeholder="Seu CPF (somente números)"
-        id="cpf"
-        name="cpf" 
-        value={formData.cpf} 
-        onChange={handleChange} 
-      />
+      {/* Linha 2: Email e Senha */}
+      <div className={styles.inputRow}>
+        <div className={styles.inputFieldWrapper}>
+          <label htmlFor="email" className={styles.label}>Email</label>
+          <InputField
+            type="email"
+            placeholder="Seu email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+        </div>
+        <div className={styles.inputFieldWrapper}>
+          <label htmlFor="senha" className={styles.label}>Senha</label>
+          <InputField
+            type="password"
+            placeholder="Senha"
+            id="senha"
+            name="senha"
+            value={formData.senha}
+            onChange={handleChange}
+          />
+        </div>
+      </div>
 
-      <label htmlFor="email" className={styles.label}>Email</label>
-      <InputField
-        type="email"
-        placeholder="Seu email"
-        id="email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-      />
+      {/* Linha 3: Idade (ocupará a linha inteira ou metade, dependendo do estilo) */}
+      <div className={styles.inputRow}>
+        <div className={styles.inputFieldWrapper}>
+          <label htmlFor="cpf" className={styles.label}>CPF</label>
+          <InputField
+            type="text"
+            placeholder="Seu CPF (somente números)"
+            id="cpf"
+            name="cpf"
+            value={formData.cpf}
+            onChange={handleChange}
+          />
+        </div>
 
-      <label htmlFor="senha" className={styles.label}>Senha</label>
-      <InputField
-        type="password"
-        placeholder="Senha"
-        id="senha"
-        name="senha"
-        value={formData.senha}
-        onChange={handleChange}
-      />
-
-      <label htmlFor="idade" className={styles.label}>Idade</label>
-      <InputField
-        type="number"
-        placeholder="Idade"
-        id="idade"
-        name="idade"
-        value={formData.idade}
-        onChange={handleChange}
-      />
-
+      </div>
+      <div className={styles.buttonRow}>
       <FormButton type="submit" disabled={isLoading}>
         {isLoading ? 'Cadastrando...' : 'Cadastrar'}
       </FormButton>
 
       {/* Feedback para o usuário */}
       {message && <p className={styles.successMessage}>{message}</p>}
+      {error && <p className={styles.errorMessage}>{error}</p>}
+      </div>
     </form>
   );
 }
+

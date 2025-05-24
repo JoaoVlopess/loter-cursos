@@ -1,15 +1,47 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem; /* Aumentando um pouco o gap para mais respiro */
   width: 100%;
-  max-width: 320px;
+  max-width: 360px; /* Um pouco maior para um visual mais moderno */
+  padding: 2rem; /* Adiciona padding interno */
+  background-color: rgba(255, 255, 255, 0.05); /* Mesmo fundo translúcido do CadastroForm */
+  border-radius: 8px; /* Bordas arredondadas */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
 }
+
 .label {
-  font-size: 0.9em; /* Ajuste conforme necessário */
-  text-align: left; /* Alinha o texto do label à esquerda */
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  color: #e0e0e0; /* Cor clara para contraste com fundo escuro da página (assumindo) */
+  display: block; /* Garante que o label ocupe a linha inteira */
+  text-align: left;
 }
-.errorMessage{
+
+/* Garante que o InputField ocupe toda a largura disponível */
+.form input[type="email"],
+.form input[type="password"],
+.form .InputField_wrapper > input { /* Se InputField tiver um wrapper interno */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.errorMessage {
+  padding: 0.75rem 1rem;
+  /* margin-top: 1rem; Não é mais necessário se o gap do form for suficiente */
+  border-radius: 4px;
   text-align: center;
-  color: rgb(248, 117, 117);
+  font-size: 0.9rem;
+  border-width: 1px;
+  border-style: solid;
+  color: #721c24; /* Texto vermelho escuro */
+  background-color: #f8d7da; /* Fundo vermelho claro */
+  border-color: #f5c6cb; /* Borda vermelha */
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.25rem;
 }

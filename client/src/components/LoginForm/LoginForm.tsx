@@ -57,36 +57,41 @@ export const LoginForm = () => {
   };
 
 return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      {/* Label e Input para Email */}
-      <label htmlFor="email" className={styles.label}>Email</label>
-      <InputField
-        type="email"
-        placeholder="Seu email"
-        id="email" // Adicione um ID que corresponda ao htmlFor do label
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        name="email" 
-      />
+      <form className={styles.form} onSubmit={handleSubmit}>
+      <div className={styles.inputGroup}>
+        <label htmlFor="email" className={styles.label}>Email</label>
+        <InputField
+          type="email"
+          placeholder="Seu email"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          name="email"
+        />
+      </div>
 
-      {/* Label e Input para Senha */}
-      <label htmlFor="senha" className={styles.label}>Senha</label>
-      <InputField
-        type="password"
-        placeholder="********"
-        id="senha" // Adicione um ID que corresponda ao htmlFor do label
-        value={senha}
-        onChange={(e) => setSenha(e.target.value)}
-        name="senha" // Adicionado para consistência
+      <div className={styles.inputGroup}>
+        <label htmlFor="senha" className={styles.label}>Senha</label>
+        <InputField
+          type="password"
+          placeholder="********"
+          id="senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          name="senha"
+        />
+      </div>
 
-      />
+      {/* O botão e a mensagem de erro não precisam estar em um inputGroup,
+          pois o gap do form já os espaçará corretamente dos inputGroups. */}
 
       <FormButton type="submit" disabled={isLoading}>
         {isLoading ? 'Entrando...' : 'Entrar'}
-      </FormButton>
+        </FormButton>
 
       {error && <p className={styles.errorMessage}>{error}</p>}
     </form>
   );
 };
+
 
