@@ -1,6 +1,4 @@
-/**
- * Representa um Certificado emitido para um Aluno em um Curso.
- */
+
 export type Certificado = {
   id_certificado: number;
   id_aluno: number;

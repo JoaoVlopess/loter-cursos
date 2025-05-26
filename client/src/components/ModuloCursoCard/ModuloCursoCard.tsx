@@ -2,15 +2,9 @@ import React from 'react';
 import { Modulo } from '../../types/Curso/modulo';
 import styles from '../ModuloCursoCard/ModuloCursoCard.module.css'; // Importa o CSS do componente
 
-interface ModuloCursoCardProps {
-  modulo: Modulo;
-  // Você pode adicionar handlers para os botões aqui, se necessário
-  // onEditModulo?: (idModulo: number) => void;
-  // onAddAula?: (idModulo: number) => void;
-  // onEditAula?: (idAula: number) => void;
-}
 
-export const ModuloCursoCard: React.FC<ModuloCursoCardProps> = ({ modulo }) => {
+
+export const ModuloCursoCard: React.FC<{ modulo: Modulo }> = ({ modulo }) => {
   return (
     <div className={styles.moduloCard}>
       <div className={styles.moduloHeader}>
