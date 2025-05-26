@@ -126,6 +126,12 @@ export const ProfessorEditPage = () => {
     handleCloseModuloModal();
   };
 
+  const handleDeleteModulo = (idModuloToDelete: number) => {
+    setModulos(prevModulos => prevModulos.filter(mod => mod.id_modulo !== idModuloToDelete));
+    handleCloseModuloModal(); // Fecha o modal após a exclusão
+  };
+
+
   // Efeito para calcular a próxima ordem do módulo quando a lista de módulos mudar
   useEffect(() => {
     const ordem = modulos.length > 0 ? Math.max(...modulos.map(m => m.ordem)) + 1 : 1;
@@ -185,6 +191,20 @@ export const ProfessorEditPage = () => {
     handleCloseAulaModal();
   };
 
+  const handleDeleteAula = (idAulaToDelete: number, idModuloDaAula: number) => {
+    setModulos(prevModulos =>
+      prevModulos.map(mod => {
+        if (mod.id_modulo === idModuloDaAula) {
+          const aulasAtualizadas = (mod.aulas || []).filter(a => a.id_aula !== idAulaToDelete);
+          return { ...mod, aulas: aulasAtualizadas };
+        }
+        return mod;
+      })
+    );
+    handleCloseAulaModal(); // Fecha o modal após a exclusão
+  };
+
+
   return (
     <div className={styles.container}>
       <h1 className={styles.pageTitle}>Gerenciamento Curso X</h1>
@@ -209,6 +229,7 @@ export const ProfessorEditPage = () => {
           modulo={editingModulo} // This will be null for "add", or an object for "edit"
           onSave={handleSaveModulo}
           nextOrdem={nextModuloOrdem}
+          onDelete={handleDeleteModulo}
         />
       )}
 
@@ -220,6 +241,7 @@ export const ProfessorEditPage = () => {
           aula={editingAula}
           idModulo={currentModuloIdForAula}
           nextOrdem={nextAulaOrdemInModal}
+          onDelete={handleDeleteAula}
         />
       )}
     </div>

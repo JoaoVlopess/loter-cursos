@@ -9,6 +9,7 @@ interface EditAulaModalProps {
   aula?: Aula | null; // Aula existente para edição
   idModulo: number; // Necessário para saber a qual módulo adicionar/editar
   nextOrdem?: number; // Sugestão para a ordem da nova aula
+  onDelete?: (idAula: number, idModulo: number) => void; // Função para deletar a aula
 }
 
 export const EditAulaModal: React.FC<EditAulaModalProps> = ({
@@ -16,7 +17,9 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
   onClose,
   onSave,
   aula,
-  nextOrdem
+  idModulo, // Destructure idModulo
+  nextOrdem,
+  onDelete  // Destructure onDelete
 }) => {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -53,7 +56,7 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
       alert("A ordem deve ser um número.");
       return;
     }
-    if (duracao && duracaoNumerica === null) {
+    if (duracao && duracaoNumerica === null && String(duracao).trim() !== "") {
         alert("A duração, se preenchida, deve ser um número.");
         return;
     }
@@ -68,6 +71,12 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
       },
       aula?.id_aula // Passa o id_aula se estiver editando
     );
+  };
+
+  const handleDeleteClick = () => {
+    if (aula && onDelete && window.confirm(`Tem certeza que deseja excluir a aula "${aula.titulo}"? Esta ação não pode ser desfeita.`)) {
+      onDelete(aula.id_aula, idModulo); // Pass idModulo here
+    }
   };
 
   return (
@@ -126,6 +135,9 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
           </div>
           <div className={styles.modalActions}>
             <button type="submit" className={styles.saveButton}>Salvar</button>
+            {aula && onDelete && ( // Mostrar botão de excluir apenas se estiver editando e onDelete for fornecido
+              <button type="button" onClick={handleDeleteClick} className={styles.deleteButton}>Excluir Aula</button>
+            )}
             <button type="button" onClick={onClose} className={styles.cancelButton}>Cancelar</button>
           </div>
         </form>

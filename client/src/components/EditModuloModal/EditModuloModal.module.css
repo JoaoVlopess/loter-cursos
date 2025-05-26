@@ -89,3 +89,24 @@
 .cancelButton:hover {
   background-color: #b54b43;
 }
+
+/* Adicionar ao final de EditModuloModal.module.css */
+.deleteButton {
+  background-color: #dc3545; /* Vermelho para perigo */
+  color: white;
+  margin-left: auto; /* Empurra para a esquerda se houver outros botões à direita */
+}
+
+.deleteButton:hover {
+  background-color: #c82333;
+}
+
+/* Ajuste no modalActions para melhor espaçamento se necessário */
+.modalActions {
+  display: flex;
+  justify-content: flex-end; /* Mantém Salvar e Cancelar à direita */
+  gap: 10px;
+  margin-top: 20px;
+  align-items: center; /* Alinha os botões verticalmente */
+}
+
