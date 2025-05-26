@@ -1,11 +1,11 @@
-// import type { Professor } from "../Clientes/professor";
-
+/**
+ * Representa um Curso oferecido na plataforma.
+ */
 export type Curso = {
   id_curso: number;
-  titulo: string;
-  descricao: string;
-  carga_horaria: number;
   id_professor: number;
-  modulos: number;
-  // professor?: Professor;
+  titulo: string;
+  descricao?: string | null; // Descrições podem ser opcionais
+  carga_horaria?: number | null; // Pode ser opcional
+  // Adicione aqui campos como 'imagem_url', 'preco', etc., se necessário.
 };

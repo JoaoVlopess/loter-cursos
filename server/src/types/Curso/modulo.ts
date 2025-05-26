@@ -1,12 +1,9 @@
-import type { Aula } from "./aula";
-import type { Curso } from "./curso";
-
+/**
+ * Representa um Módulo dentro de um Curso.
+ */
 export type Modulo = {
   id_modulo: number;
   id_curso: number;
   titulo: string;
-  ordem: number;
-  descricao: string;
-  aulas: Aula[];
-  curso?: Curso;
+  descricao?: string | null;
 };
