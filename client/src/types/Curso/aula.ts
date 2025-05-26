@@ -6,5 +6,7 @@ export type Aula = {
   id_modulo: number;
   titulo: string;
   conteudo?: string | null; // Agora armazena o URL/ID/Embed Code
-  duracao?: number | null; // Duração em minutos
+  duracao?: number | null; // Duração em 
+  ordem: number;
+  descricao?: string | null; // Descrição opcional da aula
 };

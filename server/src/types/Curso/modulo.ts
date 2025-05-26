@@ -1,3 +1,5 @@
+import { Aula } from "./aula";
+
 /**
  * Representa um Módulo dentro de um Curso.
  */
@@ -6,4 +8,6 @@ export type Modulo = {
   id_curso: number;
   titulo: string;
   descricao?: string | null;
+  ordem: number;
+   aulas?: Aula[];
 };
