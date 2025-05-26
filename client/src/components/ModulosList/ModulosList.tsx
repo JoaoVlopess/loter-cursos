@@ -5,13 +5,18 @@ import styles from '../../components/ModulosList/ModulosList.module.css';
 
 interface ModulosListProps {
   modulos: Modulo[];
+   onEditModulo: (modulo: Modulo) => void;
 }
 
-export const ModulosList: React.FC<ModulosListProps> = ({ modulos }) => {
+export const ModulosList: React.FC<ModulosListProps> = ({ modulos, onEditModulo }) => {
   return (
     <div className={styles.modulosContainer}>
       {modulos.map(modulo => (
-        <ModuloCursoCard key={modulo.id_modulo} modulo={modulo} />
+        <ModuloCursoCard
+          key={modulo.id_modulo}
+          modulo={modulo}
+          onEdit={onEditModulo} // Passando a função onEditModulo para a prop onEdit
+        />
       ))}
     </div>
   );

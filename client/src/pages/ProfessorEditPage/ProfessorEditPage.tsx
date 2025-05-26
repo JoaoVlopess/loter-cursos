@@ -1,13 +1,15 @@
+import React, { useState } from 'react'; // Adicionado useState
 import styles from '../ProfessorEditPage/ProfessorEditPage.module.css';
 import { Modulo } from '../../types/Curso/modulo';
 import { FormButton } from '../../components/FormButton/FormButton';
 import { Link } from 'react-router-dom';
 import { ModulosList } from '../../components/ModulosList/ModulosList';
+import { EditModuloModal } from '../../components/EditModuloModal/EditModuloModal'; // Importar o modal
 
 
 export const ProfessorEditPage = () => {
-  // Dados de exemplo - substitua pelos seus dados reais
-  const modulos: Modulo[] = [
+  // Dados de exemplo iniciais
+  const initialModulos: Modulo[] = [
     {
       id_modulo: 1,
       id_curso: 101,
@@ -68,15 +70,52 @@ export const ProfessorEditPage = () => {
     }
   ];
 
+  const [modulos, setModulos] = useState<Modulo[]>(initialModulos);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingModulo, setEditingModulo] = useState<Modulo | null>(null);
+
+  const handleOpenEditModal = (modulo: Modulo) => {
+    setEditingModulo(modulo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingModulo(null);
+  };
+
+  const handleSaveModulo = (updatedData: { titulo: string; ordem: number; descricao: string }) => {
+    if (!editingModulo) return;
+
+    setModulos(prevModulos =>
+      prevModulos.map(mod =>
+        mod.id_modulo === editingModulo.id_modulo
+          ? { ...mod, ...updatedData }
+          : mod
+      )
+    );
+    handleCloseModal();
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.pageTitle}>Gerenciamento Curso X</h1>
       <div className={styles.header}>
         <FormButton>
-          <Link to="/home"> + Adicionar Módulo</Link>
+          {/* Idealmente, este botão também abriria um modal para adicionar novo módulo */}
+          <Link to="#"> + Adicionar Módulo</Link>
         </FormButton>
       </div>
-      <ModulosList modulos={modulos} />
+      <ModulosList modulos={modulos} onEditModulo={handleOpenEditModal} />
+
+      {editingModulo && (
+        <EditModuloModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          modulo={editingModulo}
+          onSave={handleSaveModulo}
+        />
+      )}
     </div>
   );
 };

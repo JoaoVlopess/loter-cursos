@@ -3,14 +3,18 @@ import { Modulo } from '../../types/Curso/modulo';
 import styles from '../ModuloCursoCard/ModuloCursoCard.module.css'; // Importa o CSS do componente
 
 
+interface ModuloCursoCardProps {
+  modulo: Modulo;
+  onEdit: (modulo: Modulo) => void; // Função para chamar ao clicar em editar
+}
 
-export const ModuloCursoCard: React.FC<{ modulo: Modulo }> = ({ modulo }) => {
+export const ModuloCursoCard: React.FC<ModuloCursoCardProps> = ({ modulo, onEdit }) => {
   return (
     <div className={styles.moduloCard}>
       <div className={styles.moduloHeader}>
         <h3>{modulo.titulo}</h3>
         <div className={styles.moduloActions}>
-          <button>Editar</button>
+          <button onClick={() => onEdit(modulo)}>Editar</button>
           <button>+ Aula</button>
         </div>
       </div>

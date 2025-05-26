@@ -8,4 +8,5 @@ export type Aula = {
   conteudo?: string | null; // Agora armazena o URL/ID/Embed Code
   duracao?: number | null; // Duração em 
   ordem: number;
+  descricao?: string | null; // Descrição opcional da aula
 };
