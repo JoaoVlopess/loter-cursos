@@ -1,0 +1,43 @@
+import React from 'react';
+import { Modulo } from '../../types/Curso/modulo';
+import styles from './ModuloCursoCard.module.css'; // Importa o CSS do componente
+
+interface ModuloCursoCardProps {
+  modulo: Modulo;
+  // Você pode adicionar handlers para os botões aqui, se necessário
+  // onEditModulo?: (idModulo: number) => void;
+  // onAddAula?: (idModulo: number) => void;
+  // onEditAula?: (idAula: number) => void;
+}
+
+export const ModuloCursoCard: React.FC<ModuloCursoCardProps> = ({ modulo }) => {
+  return (
+    <div className={styles.moduloCard}>
+      <div className={styles.moduloHeader}>
+        <h3>{modulo.titulo}</h3>
+        <div className={styles.moduloActions}>
+          <button>Editar</button>
+          <button>+ Aula</button>
+        </div>
+      </div>
+      
+      <div className={styles.moduloDescription}>
+        {modulo.descricao}
+      </div>
+
+      {modulo.aulas && modulo.aulas.length > 0 && (
+        <div className={styles.aulasList}>
+          {modulo.aulas.map(aula => (
+            <div key={aula.id_aula} className={styles.aulaItem}>
+              <div className={styles.aulaInfo}>
+                <span className={styles.aulaTitle}>{aula.titulo}</span>
+                <span className={styles.aulaDuration}>{aula.duracao} min</span>
+              </div>
+              <button className={styles.editAulaButton}>Editar</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

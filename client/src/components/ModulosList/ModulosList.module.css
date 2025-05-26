@@ -1,0 +1,9 @@
+/* ÁREA PRINCIPAL COM FUNDO TRANSLÚCIDO */
+.modulosContainer {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
