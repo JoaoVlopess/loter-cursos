@@ -1,5 +1,5 @@
-import type { Curso } from "../../../types/Curso/curso";
-import styles from "../AdminCard/AdminCard.module.css";
+import type { Curso } from "../../types/Curso/curso";
+import styles from "../ProfessorCard/ProfessorCard.module.css";
 import { IoTime } from "react-icons/io5";
 import { FaBook } from "react-icons/fa";
 import { Link } from 'react-router-dom';
@@ -8,7 +8,7 @@ type Props = {
   curso: Curso;
 };
 
-export const ProfessorCard = ({ curso }: Props) => {
+export const AdminCard = ({ curso }: Props) => {
   return (
     <div className={styles.course_card}>
       <div className={styles.course_plus}>
