@@ -88,11 +88,12 @@ export const EditModuloModal: React.FC<EditModuloModalProps> = ({ isOpen, onClos
             />
           </div>
           <div className={styles.modalActions}>
-            <button type="submit" className={styles.saveButton}>Salvar</button>
             {modulo && onDelete && ( // Mostrar botão de excluir apenas se estiver editando e onDelete for fornecido
               <button type="button" onClick={handleDeleteClick} className={styles.deleteButton}>Excluir Módulo</button>
             )}
-            <button type="button" onClick={onClose} className={styles.cancelButton}>Cancelar</button>
+          <button type="button" onClick={onClose} className={styles.cancelButton}>Cancelar</button>
+            
+            <button type="submit" className={styles.saveButton}>Salvar</button>
           </div>
         </form>
       </div>
