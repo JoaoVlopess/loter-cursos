@@ -8,6 +8,7 @@
 .main_content {
   flex: 1; /* Ocupa o espaço disponível entre NavBar e Footer */
   padding-top: 2rem; /* Adiciona um espaçamento interno */
+  padding-bottom: 2.5rem; /* Adiciona um espaçamento interno */
   display: flex;
   flex-direction: column;
   gap: 20px; /* Espaço entre os elementos filhos diretos */
