@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from './AdminList.module.css'; // Criaremos este CSS
 
-interface AdminListProps<T> {
+type AdminListProps<T> = {
   items: T[];
   renderItemContent: (item: T) => React.ReactNode; // Conteúdo principal do item
   addItemLabel: string;
@@ -21,7 +21,7 @@ export function AdminList<T>({
   onEditItem,
   onDeleteItem,
 }: AdminListProps<T>) {
-    
+
   return (
     <ul className={styles.admin_list}>
       <li className={`${styles.admin_list_item} ${styles.admin_list_item_add}`}>
