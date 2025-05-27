@@ -26,6 +26,50 @@ export const getAllUsuarios = async (req: AuthRequest, res: Response, next: Next
 };
 
 /**
+ * @route   GET /usuarios/alunos
+ * @desc    Obter todos os usuários que são Alunos
+ * @access  Logado (SEM VERIFICAÇÃO DE ADMIN!)
+ */
+export const getAllAlunos = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const [rows]: any[] = await pool.execute(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo, u.tipo
+             FROM usuario u
+             WHERE u.tipo = 'ALUNO' AND u.ativo = TRUE
+             ORDER BY u.nome ASC`
+        );
+        res.json({ success: true, data: rows });
+    } catch (err: any) {
+        console.error("Erro ao buscar todos os alunos:", err);
+        next(err);
+    }
+};
+
+/**
+ * @route   GET /usuarios/professores
+ * @desc    Obter todos os usuários que são Professores (com detalhes do professor)
+ * @access  Logado (SEM VERIFICAÇÃO DE ADMIN!)
+ */
+export const getAllProfessores = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const [rows]: any[] = await pool.execute(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo, u.tipo,
+                    p.id_professor, p.especialidade
+             FROM usuario u
+             INNER JOIN professor p ON u.id_usuario = p.id_usuario -- Garante que é um professor
+             WHERE u.ativo = TRUE
+             ORDER BY u.nome ASC`
+        );
+        res.json({ success: true, data: rows });
+    } catch (err: any) {
+        console.error("Erro ao buscar todos os professores:", err);
+        next(err);
+    }
+};
+
+
+
+/**
  * @route   GET /api/usuarios/:id
  * @desc    Obter um usuário específico pelo ID
  * @access  Logado (SEM VERIFICAÇÃO DE ADMIN OU PRÓPRIO USUÁRIO!)
