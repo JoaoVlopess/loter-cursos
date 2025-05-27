@@ -1,11 +1,12 @@
-/**
- * Representa um Curso oferecido na plataforma.
- */
+// Importa o tipo Modulo
+import { Modulo } from './modulo';
+
 export type Curso = {
   id_curso: number;
   id_professor: number;
   titulo: string;
-  descricao?: string | null; // Descrições podem ser opcionais
-  carga_horaria?: number | null; // Pode ser opcional
-  // Adicione aqui campos como 'imagem_url', 'preco', etc., se necessário.
+  descricao?: string | null;     // Pode ser nulo/opcional
+  carga_horaria?: number | null; // Pode ser nulo/opcional
+  nome_professor?: string;       // Veio do JOIN, então é opcional
+  modulos?: Modulo[];          // <-- Módulos como array opcional
 };

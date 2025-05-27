@@ -1,13 +1,11 @@
-import { Aula } from "./aula";
+// Importa o tipo Aula
+import { Aula } from './aula';
 
-/**
- * Representa um Módulo dentro de um Curso.
- */
 export type Modulo = {
   id_modulo: number;
   id_curso: number;
   titulo: string;
-  descricao?: string | null;
+  descricao?: string | null; // Pode ser nulo/opcional
   ordem: number;
-   aulas?: Aula[];
+  aulas?: Aula[];           // <-- Aulas como array opcional
 };
