@@ -12,8 +12,8 @@ import { ProtectedRoute } from "../components/ProtectedRoute/ProtectedRoute";
 // import { ProfessorCursosPage } from "../pages/Professor/ProfessorCursosPage";
 // import { ProfessorCursoPage } from "../pages/Professor/ProfessorCursoPage";
 
-export default function AppRoutes() { 
-return useRoutes([
+export default function AppRoutes() {
+  return useRoutes([
     { path: '/', element: <LoginPage /> },
     { path: '/cadastro', element: <CadastroPage /> },
 
@@ -49,6 +49,19 @@ return useRoutes([
         // },
       ],
     },
+    {
+      element: <ProtectedRoute allowedTypes={['ADMIN']} />,
+      children: [
+        { path: '/admin', element: <ProfArea /> },
+        { path: '/admin/curso/:id', element: <ProfessorEditPage /> },
+        // Adicione outras rotas específicas de professor aqui, se houver.
+        // Exemplo:
+        // {
+        //   path: '/professor/cursos',
+        //   element: <ProfessorCursosPage /> // Certifique-se de importar este componente
+        // },
+      ],
+    },
 
     // Você pode adicionar mais blocos de ProtectedRoute para outros tipos de usuário,
     // como 'ADMIN', se necessário.
@@ -56,5 +69,5 @@ return useRoutes([
     // { element: <ProtectedRoute allowedTypes={['ADMIN']} />, children: [...] },
  
      { path: '*', element: <NotFoundPage /> }
-   ]);
-  }
+  ]);
+}

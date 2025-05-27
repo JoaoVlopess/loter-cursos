@@ -1,0 +1,9 @@
+.AdminArea_page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Garante altura mínima da tela inteira */
+}
+
+.main_content {
+  flex: 1; /* Ocupa o espaço disponível entre NavBar e Footer */
+}
