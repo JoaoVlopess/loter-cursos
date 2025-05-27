@@ -8,6 +8,7 @@ import { AulaPage } from "../pages/Curso/AulaPage";
 import { ProfArea } from "../pages/ProfArea/ProfArea";
 import { ProfessorEditPage } from "../pages/ProfessorEditPage/ProfessorEditPage";
 import { ProtectedRoute } from "../components/ProtectedRoute/ProtectedRoute";
+import { AdminArea } from "../pages/AdminArea/AdminArea";
 // import { useUser } from "../hooks/userUser";
 // import { ProfessorCursosPage } from "../pages/Professor/ProfessorCursosPage";
 // import { ProfessorCursoPage } from "../pages/Professor/ProfessorCursoPage";
@@ -41,18 +42,13 @@ export default function AppRoutes() {
       children: [
         { path: '/professor', element: <ProfArea /> },
         { path: '/professor/curso/:id', element: <ProfessorEditPage /> },
-        // Adicione outras rotas específicas de professor aqui, se houver.
-        // Exemplo:
-        // {
-        //   path: '/professor/cursos',
-        //   element: <ProfessorCursosPage /> // Certifique-se de importar este componente
-        // },
+       
       ],
     },
     {
       element: <ProtectedRoute allowedTypes={['ADMIN']} />,
       children: [
-        { path: '/admin', element: <ProfArea /> },
+        { path: '/admin', element: <AdminArea /> },
         { path: '/admin/curso/:id', element: <ProfessorEditPage /> },
         // Adicione outras rotas específicas de professor aqui, se houver.
         // Exemplo:

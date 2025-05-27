@@ -7,11 +7,12 @@ interface CursoGridProps {
   cursos: Curso[];
   CardComponent: React.ComponentType<{ curso: Curso }>;
   titulo?: string;
+   className?: string; // Adiciona a prop className opcional
 }
 
-export const CursoGrid = ({ cursos, CardComponent, titulo = 'Meus Cursos' }: CursoGridProps) => {
+export const CursoGrid = ({ cursos, CardComponent, titulo, className }: CursoGridProps) => {
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${className || ''}`}>
       <div className={styles.wrapper}>
         <h2 className={styles.title}>{titulo}</h2>
         <div className={styles.course_grid}>

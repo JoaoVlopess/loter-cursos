@@ -1,9 +1,98 @@
 .AdminArea_page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Garante altura mínima da tela inteira */
+  height: 100vh; /* Garante altura da tela inteira */
+  overflow: hidden; /* Impede a rolagem na página principal */
 }
 
 .main_content {
   flex: 1; /* Ocupa o espaço disponível entre NavBar e Footer */
+  padding-top: 2rem; /* Adiciona um espaçamento interno */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espaço entre os elementos filhos diretos */
+  overflow: hidden; /* Impede a rolagem no container principal do conteúdo */
+}
+
+.main_content h1 {
+  text-align: center;
+  color: #fff;
+
+}
+
+.admin_navigation {
+  display: flex;
+  justify-content: center; /* Centraliza os botões */
+  gap: 15px; /* Espaço entre os botões */
+  margin-bottom: 30px; /* Espaço abaixo da navegação */
+  flex-wrap: wrap; /* Permite que os botões quebrem para a próxima linha em telas menores */
+}
+
+.nav_button_admin {
+  padding: 12px 25px;
+  background-color: rgba(255, 255, 255, 0.1); /* Cor de fundo azul (exemplo) */
+  color: white; /* Cor do texto */
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.nav_button_admin:hover {
+  background-color: rgba(255, 255, 255, 0.2) /* Cor de fundo mais escura no hover */
+}
+
+.CursoGrid{
+  padding-bottom: 5rem ;
+  padding-top: 1rem; /* Para um visual mais simples, você pode reduzir este padding */
+  /* Exemplo de padding simplificado, caso este componente ainda seja usado: */
+  /* padding: 2rem 1rem; */
+}
+
+/* Novos estilos para a exibição em lista */
+.admin_list_container {
+  width: 100%;
+  max-width: 800px; /* Largura máxima para o container da lista */
+  margin-left: auto; /* Centraliza horizontalmente */
+  margin-right: auto; /* Centraliza horizontalmente */
+  /* As margens verticais são gerenciadas pelo 'gap' do .main_content e pelo flex-grow */
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.03); /* Fundo sutil para a área da lista */
+  border-radius: 6px;
+  flex-grow: 1; /* Faz o container da lista ocupar o espaço vertical disponível */
+  overflow-y: auto; /* Adiciona rolagem vertical APENAS se o conteúdo exceder a altura */
+  min-height: 0; /* Importante para itens flex com overflow, para permitir que encolham corretamente */
+  /* box-shadow: 0 1px 3px rgba(0,0,0,0.1); */ /* Sombra opcional e bem suave */
+}
+
+.admin_list_title {
+  color: #e0e0e0; /* Cor do título da lista */
+  font-size: 1.4rem; /* Tamanho do título da lista */
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.admin_list {
+  list-style: none; /* Remove marcadores de lista padrão */
+  padding: 0;
+  margin: 0;
+}
+
+.admin_list_item {
+  background-color: rgba(0, 0, 0, 0.15); /* Fundo dos itens da lista */
+  color: #ccc; /* Cor do texto dos itens */
+  padding: 12px 15px;
+  margin-bottom: 8px; /* Espaço entre os itens */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  /* Para alinhar conteúdo e botões de ação dentro do item, se houver: */
+  /* display: flex; */
+  /* justify-content: space-between; */
+  /* align-items: center; */
+}
+
+.admin_list_item:hover {
+  background-color: rgba(0, 0, 0, 0.25); /* Efeito hover sutil */
 }

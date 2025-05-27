@@ -1,5 +1,5 @@
 import type { Curso } from "../../types/Curso/curso";
-import styles from "../ProfessorCard/ProfessorCard.module.css";
+import styles from "./AdminCard.module.css";
 import { IoTime } from "react-icons/io5";
 import { FaBook } from "react-icons/fa";
 import { Link } from 'react-router-dom';

@@ -35,7 +35,6 @@ import styles from "../ProfArea/ProfArea.module.css";
 
 export const ProfArea = () => {
 
-  
   return (
     <div className={styles.profArea_page}>
       <NavBar />
