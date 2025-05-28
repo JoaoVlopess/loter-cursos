@@ -41,17 +41,15 @@ export function verificarToken(req: AuthRequest, res: Response, next: NextFuncti
 
 // **Não se esqueça de também ter o checkRole se precisar dele:**
 export const checkRole = (allowedRoles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction): void => { // <-- Também retorna void
-    if (!req.usuario) {
-      res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
-      return; // <-- Retorna void
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.usuario || !req.usuario.tipo) { // Adicionado !req.usuario.tipo para segurança
+      res.status(401).json({ success: false, message: 'Usuário não autenticado ou tipo não definido no token.' });
+      return;
     }
-
     if (!allowedRoles.includes(req.usuario.tipo)) {
-      res.status(403).json({ success: false, message: 'Acesso negado. Você não tem permissão.' });
-      return; // <-- Retorna void
+      res.status(403).json({ success: false, message: 'Acesso negado. Você não tem permissão para esta ação.' });
+      return;
     }
-
-    next(); // <-- Retorna void
+    next();
   };
 };
