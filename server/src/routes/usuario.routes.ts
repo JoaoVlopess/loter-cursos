@@ -1,26 +1,22 @@
 import { Router } from 'express';
 import {
-    getAllUsuarios,
-    getUsuarioById,
-    updateUsuario,
-    deleteUsuario,
-    createUsuarioByAdmin,
-    getAllAlunos,      // <-- Importe
-    getAllProfessores  // <-- Importe
+    getAllUsuarios, getUsuarioById, updateUsuario, deleteUsuario,
+    createUsuarioByAdmin, getAllAlunos, getAllProfessores
 } from '../controllers/usuario.controller';
-// Importamos apenas 'verificarToken', removemos 'checkRole'
-import { verificarToken } from '../middlewares/authMiddleware';
+import { verificarToken, checkRole } from '../middlewares/authMiddleware'; // Importe checkRole
 
 const router = Router();
 
-// Agora, aplicamos apenas 'verificarToken'.
-// **ATENÇÃO:** Qualquer usuário logado poderá acessar estas rotas!
-router.get('/alunos', verificarToken, getAllAlunos);   
-router.get('/professores', verificarToken, getAllProfessores); 
-router.get('/', verificarToken, getAllUsuarios);
-router.post('/', verificarToken, createUsuarioByAdmin);
-router.get('/:id', verificarToken, getUsuarioById);
-router.put('/:id', verificarToken, updateUsuario);
-router.delete('/:id', verificarToken, deleteUsuario);
+// Rotas que devem ser SOMENTE para ADMIN
+router.get('/', verificarToken, checkRole(['ADMIN']), getAllUsuarios);
+router.post('/', verificarToken, checkRole(['ADMIN']), createUsuarioByAdmin);
+router.get('/alunos', verificarToken, checkRole(['ADMIN']), getAllAlunos); // Ou ['ADMIN', 'PROFESSOR'] se professor puder ver
+router.get('/professores', verificarToken, checkRole(['ADMIN']), getAllProfessores); // Ou ['ADMIN', 'PROFESSOR']
+
+// Rotas que podem ser para ADMIN ou o próprio usuário (lógica no controller)
+// Ou você pode querer que só ADMIN altere outros.
+router.get('/:id', verificarToken, getUsuarioById); // A lógica de "self" ou "admin" está no controller
+router.put('/:id', verificarToken, updateUsuario);   // Idem
+router.delete('/:id', verificarToken, checkRole(['ADMIN']), deleteUsuario); // Deletar geralmente é só Admin
 
 export default router;
