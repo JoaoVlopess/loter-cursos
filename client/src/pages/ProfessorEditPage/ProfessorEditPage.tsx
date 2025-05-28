@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '../ProfessorEditPage/ProfessorEditPage.module.css';
 import type { Modulo } from '../../types/Curso/modulo';
 import type { Aula } from '../../types/Curso/aula'; // Importar Aula
