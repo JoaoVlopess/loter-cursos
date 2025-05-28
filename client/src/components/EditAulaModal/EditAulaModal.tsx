@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Aula } from '../../types/Curso/aula'; // Certifique-se que o caminho está correto
+import type { Aula } from '../../types/Curso/aula'; // Certifique-se que o caminho está correto
 import styles from './EditAulaModal.module.css';
 
 interface EditAulaModalProps {

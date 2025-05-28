@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modulo } from '../../types/Curso/modulo';
+import type { Modulo } from '../../types/Curso/modulo';
 import styles from './EditModuloModal.module.css';
 
 interface EditModuloModalProps {

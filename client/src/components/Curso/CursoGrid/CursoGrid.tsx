@@ -1,6 +1,6 @@
 // CursoGrid.tsx
 import styles from '../CursoGrid/CursoGrid.module.css';
-import { Curso } from '../../../types/Curso/curso';
+import type { Curso } from '../../../types/Curso/curso';
 
 
 interface CursoGridProps {

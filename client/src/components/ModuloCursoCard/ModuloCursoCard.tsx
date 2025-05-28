@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modulo} from '../../types/Curso/modulo'; // Importar Aula também
-import { Aula } from '../../types/Curso/aula';
+import type { Modulo} from '../../types/Curso/modulo'; // Importar Aula também
+import type { Aula } from '../../types/Curso/aula';
 import styles from '../ModuloCursoCard/ModuloCursoCard.module.css'; // Importa o CSS do componente
 
 

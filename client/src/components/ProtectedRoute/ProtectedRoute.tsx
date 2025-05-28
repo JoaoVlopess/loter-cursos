@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Usuario } from '../../types/Clientes/usuario'; // Importe o tipo Usuario
+import type { Usuario } from '../../types/Clientes/usuario'; // Importe o tipo Usuario
 
 interface ProtectedRouteProps {
 

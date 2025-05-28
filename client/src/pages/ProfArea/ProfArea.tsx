@@ -2,7 +2,7 @@ import { CursoGrid } from "../../components/Curso/CursoGrid/CursoGrid";
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
 import { ProfessorCard } from "../../components/Professor/ProfessorCard/ProfessorCard";
-import { Curso } from "../../types/Curso/curso";
+import type { Curso } from "../../types/Curso/curso";
 
 import styles from "../ProfArea/ProfArea.module.css";
 

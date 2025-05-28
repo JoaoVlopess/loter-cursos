@@ -2,14 +2,14 @@
 // import { CursoGrid } from "../../components/Curso/CursoGrid/CursoGrid"; // Removido pois estamos listando cursos de outra forma
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
-import { Curso } from "../../types/Curso/curso";
+import type { Curso } from "../../types/Curso/curso";
 import { Link } from "react-router-dom";
 import { useState } from "react"; // Importar useState
 import styles from "./AdminArea.module.css";
 // import { AdminList } from "../../components/AdminList/AdminList"; // Já importado na versão anterior
 // import { Aluno } from "../../types/Clientes/aluno"; // O tipo Aluno é mais uma referência, usaremos Usuario
 // import { Professor } from "../../types/Clientes/professor"; // O tipo Professor é mais uma referência, usaremos Usuario
-import { Usuario } from "../../types/Clientes/usuario";
+import type { Usuario } from "../../types/Clientes/usuario";
 import { AdminList } from "../../components/AdminList/AdminList";
 
 

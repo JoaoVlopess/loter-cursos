@@ -4,7 +4,7 @@ import axios from 'axios'; // Importe o axios
 import styles from './CadastroForm.module.css';
 import { InputField } from '../InputField/InputField';
 import { FormButton } from '../FormButton/FormButton';
-import { Usuario } from '../../types/Clientes/usuario';
+import type { Usuario } from '../../types/Clientes/usuario';
 
 
 
