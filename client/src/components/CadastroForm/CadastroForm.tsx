@@ -4,7 +4,7 @@ import axios from 'axios'; // Importe o axios
 import styles from './CadastroForm.module.css';
 import { InputField } from '../InputField/InputField';
 import { FormButton } from '../FormButton/FormButton';
-import { Usuario } from '../../types/Clientes/usuario';
+import type { Usuario } from '../../types/Clientes/usuario';
 
 
 
@@ -73,7 +73,8 @@ export const CadastroForm = () => {
 
       const ENDPOINT_CADASTRO = '/cadastro';
 
-      const response = await axios.post(`${API_URL_BASE}${ENDPOINT_CADASTRO}`, userDataToSubmit);
+      // Assign to _ if response data is not used, or simply await without assignment.
+      await axios.post(`${API_URL_BASE}${ENDPOINT_CADASTRO}`, userDataToSubmit);
 
       setMessage(`Aluno cadastrado com sucesso!`);
       setIsLoading(false);
@@ -158,7 +159,7 @@ export const CadastroForm = () => {
             placeholder="Seu CPF (somente números)"
             id="cpf"
             name="cpf"
-            value={formData.cpf}
+            // value={formData.cpf}
             onChange={handleChange}
           />
         </div>
@@ -176,4 +177,3 @@ export const CadastroForm = () => {
     </form>
   );
 }
-

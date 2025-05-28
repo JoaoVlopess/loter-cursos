@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Aula } from '../../types/Curso/aula'; // Certifique-se que o caminho está correto
+import type { Aula } from '../../types/Curso/aula'; // Certifique-se que o caminho está correto
 import styles from './EditAulaModal.module.css';
 
 interface EditAulaModalProps {
@@ -50,16 +50,24 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const ordemNumerica = parseInt(String(ordem), 10);
-    const duracaoNumerica = duracao ? parseInt(String(duracao), 10) : null;
 
-    if (isNaN(ordemNumerica)) {
-      alert("A ordem deve ser um número.");
+    if (isNaN(ordemNumerica) || ordemNumerica <= 0) {
+      alert("A ordem deve ser um número positivo.");
       return;
     }
-    if (duracao && duracaoNumerica === null && String(duracao).trim() !== "") {
-        alert("A duração, se preenchida, deve ser um número.");
+
+    let finalDuracao: number | null = null;
+    const duracaoStr = String(duracao).trim();
+
+    if (duracaoStr !== "") { // Se o campo duração foi preenchido
+      const parsedDuracao = parseInt(duracaoStr, 10);
+      if (isNaN(parsedDuracao) || parsedDuracao < 0) {
+        alert("A duração, se preenchida, deve ser um número válido e não negativo.");
         return;
+      }
+      finalDuracao = parsedDuracao;
     }
+    // Se duracaoStr estava vazio, finalDuracao permanece null.
 
     onSave(
       {
@@ -67,7 +75,7 @@ export const EditAulaModal: React.FC<EditAulaModalProps> = ({
         descricao: descricao || null,
         ordem: ordemNumerica,
         conteudo: conteudo || null,
-        duracao: duracaoNumerica,
+        duracao: finalDuracao ?? 0, // Garante que um número seja enviado, default 0 se não preenchido
       },
       aula?.id_aula // Passa o id_aula se estiver editando
     );

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modulo} from '../../types/Curso/modulo'; // Importar Aula também
-import { Aula } from '../../types/Curso/aula';
+import type { Modulo} from '../../types/Curso/modulo'; // Importar Aula também
+import type { Aula } from '../../types/Curso/aula';
 import styles from '../ModuloCursoCard/ModuloCursoCard.module.css'; // Importa o CSS do componente
 
 
@@ -26,9 +26,9 @@ export const ModuloCursoCard: React.FC<ModuloCursoCardProps> = ({ modulo, onEdit
         {modulo.descricao}
       </div>
 
-      {modulo.aulas && modulo.aulas.length > 0 && (
+      {modulo.aulas && modulo.aulas.length > 0 && ( // Keep this check if you only want to render the list if not empty
         <div className={styles.aulasList}>
-          {modulo.aulas.map(aula => (
+          {modulo.aulas?.map(aula => ( // Or apply optional chaining directly to map
             <div key={aula.id_aula} className={styles.aulaItem}>
               <div className={styles.aulaInfo}>
                 <span className={styles.aulaTitle}>{aula.titulo}</span>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '../ProfessorEditPage/ProfessorEditPage.module.css';
-import { Modulo } from '../../types/Curso/modulo';
-import { Aula } from '../../types/Curso/aula'; // Importar Aula
+import type { Modulo } from '../../types/Curso/modulo';
+import type { Aula } from '../../types/Curso/aula'; // Importar Aula
 import { FormButton } from '../../components/FormButton/FormButton';
 import { ModulosList } from '../../components/ModulosList/ModulosList';
 import { EditModuloModal } from '../../components/EditModuloModal/EditModuloModal';

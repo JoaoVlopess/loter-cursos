@@ -96,7 +96,7 @@ export function SidebarCurso({ cursoId }: Props) {
 
           {moduloAberto === modulo.id_modulo && (
             <ul className={styles.aulaLista}>
-              {modulo.aulas.map((aula) => (
+              {modulo.aulas?.map((aula) => (
                 <li key={aula.id_aula} className={styles.aulaItem}>
                   <Link
                     to={`/curso/${cursoId}/aula/${aula.id_aula}`}
@@ -104,7 +104,7 @@ export function SidebarCurso({ cursoId }: Props) {
                   >
                     <FaRegPlayCircle  className={styles.playIcon} />
                     <span>{aula.titulo}</span>
-                    <span className={styles.duracao}>{formatDuracao(aula.duracao)}</span>
+                    <span className={styles.duracao}>{formatDuracao(aula.duracao ?? 0)}</span>
                   </Link>
                 </li>
               ))}

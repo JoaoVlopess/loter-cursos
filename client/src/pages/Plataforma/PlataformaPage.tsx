@@ -1,7 +1,7 @@
 import { CursoGrid } from "../../components/Curso/CursoGrid/CursoGrid";
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
-import { Curso } from "../../types/Curso/curso";
+import type { Curso } from "../../types/Curso/curso";
 import { CardCurso } from '../../components/Curso/CardCurso/CardCurso';
 
 import styles from "./PlataformaPage.module.css";
@@ -54,7 +54,7 @@ export const PlataformaPage = () => {
     <div className={styles.plataforma_page}>
       <NavBar />
       <div className={styles.main_content}>
-        <CursoGrid cursos={cursos} CardComponent={CardCurso} />
+        <CursoGrid cursos={cursos} CardComponent={CardCurso} titulo="Meus Cursos"/>
       </div>
       <Footer />
     </div>
