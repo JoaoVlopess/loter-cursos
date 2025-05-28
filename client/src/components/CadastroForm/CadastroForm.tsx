@@ -73,7 +73,8 @@ export const CadastroForm = () => {
 
       const ENDPOINT_CADASTRO = '/cadastro';
 
-      const response = await axios.post(`${API_URL_BASE}${ENDPOINT_CADASTRO}`, userDataToSubmit);
+      // Assign to _ if response data is not used, or simply await without assignment.
+      await axios.post(`${API_URL_BASE}${ENDPOINT_CADASTRO}`, userDataToSubmit);
 
       setMessage(`Aluno cadastrado com sucesso!`);
       setIsLoading(false);
@@ -176,4 +177,3 @@ export const CadastroForm = () => {
     </form>
   );
 }
-
