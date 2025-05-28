@@ -1,4 +1,4 @@
-import { Aula } from "./aula";
+import type { Aula } from "./aula";
 
 /**
  * Representa um Módulo dentro de um Curso.

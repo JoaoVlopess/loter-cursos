@@ -159,7 +159,7 @@ export const CadastroForm = () => {
             placeholder="Seu CPF (somente números)"
             id="cpf"
             name="cpf"
-            value={formData.cpf}
+            // value={formData.cpf}
             onChange={handleChange}
           />
         </div>

@@ -1,8 +1,6 @@
 // AulaPage.tsx
-// import { useParams } from "react-router-dom";
 import { useState } from "react";
 import styles from "../../pages/Curso/AulaPage.module.css";
-// import { Link } from 'react-router-dom';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 
 export const AulaPage = () => {

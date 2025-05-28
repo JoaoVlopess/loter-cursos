@@ -9,7 +9,7 @@ export const CursoLayout = () => {
 
   return (
     <div className={styles.cursolayout}>
-      <NavBar /> {/* Fica no topo */}
+      <NavBar /> 
       <div className={styles.layout}>
         <main className={styles.content}>
           <Outlet />
