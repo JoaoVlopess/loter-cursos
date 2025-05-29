@@ -97,3 +97,15 @@
 .admin_list_item:hover {
   background-color: rgba(0, 0, 0, 0.25); /* Efeito hover sutil */
 }
+
+.admin_search_input{
+  width: 100%;
+  max-width: 400px; /* Largura máxima do campo de busca */
+  padding: 10px;
+  margin: 10px 0px;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05); /* Fundo sutil */
+  color: #fff; /* Cor do texto */
+  font-size: 1rem; /* Tamanho da fonte */
+}

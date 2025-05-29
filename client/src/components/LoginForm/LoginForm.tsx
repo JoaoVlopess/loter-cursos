@@ -23,8 +23,11 @@ export const LoginForm = () => {
       return;
     }
 
+
+
+
     try {
-      const API_URL_BASE = 'http://localhost:3000'; 
+      const API_URL_BASE = 'http://localhost:3000';
       const ENDPOINT_LOGIN = '/login';
 
       const response = await axios.post(`${API_URL_BASE}${ENDPOINT_LOGIN}`, {
@@ -32,13 +35,32 @@ export const LoginForm = () => {
         senha,
       });
 
-      if (response.data.success && response.data.token) {
-  
+      if (response.data.success && response.data.token && response.data.user && response.data.user.tipo) {
         localStorage.setItem('authToken', response.data.token);
-       
-        
+
+        localStorage.setItem('userData', JSON.stringify(response.data.user));
+
+
         setIsLoading(false);
-        navigate('/home'); // Redireciona para a página principal após o login
+        const userType = response.data.user.tipo;
+
+        // Redireciona com base no tipo de usuário
+        switch (userType) {
+          case 'ADMIN':
+            navigate('/admin'); // Rota para a área administrativa
+            break;
+          case 'PROFESSOR':
+            navigate('/professor'); // Rota para a área do professor
+            break;
+          case 'ALUNO':
+            navigate('/home'); // Rota para a área do aluno/plataforma
+            break;
+          default:
+            // Fallback para um tipo desconhecido ou se /home for uma página geral pós-login
+            console.warn(`Tipo de usuário desconhecido: ${userType}. Redirecionando para /home.`);
+            navigate('/home');
+            break;
+        }
       } else {
         // Caso a resposta não seja o esperado, mesmo com status 200
         setError(response.data.message || 'Falha no login. Verifique suas credenciais.');
@@ -56,8 +78,8 @@ export const LoginForm = () => {
     }
   };
 
-return (
-      <form className={styles.form} onSubmit={handleSubmit}>
+  return (
+    <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.inputGroup}>
         <label htmlFor="email" className={styles.label}>Email</label>
         <InputField
@@ -87,7 +109,7 @@ return (
 
       <FormButton type="submit" disabled={isLoading}>
         {isLoading ? 'Entrando...' : 'Entrar'}
-        </FormButton>
+      </FormButton>
 
       {error && <p className={styles.errorMessage}>{error}</p>}
     </form>
