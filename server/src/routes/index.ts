@@ -4,8 +4,10 @@ import usuarioRoutes from './usuario.routes'
 import cursoRoutes from './curso.routes';
 import { moduloRouter, cursoModuloRouter } from './modulo.routes';
 import { aulaRouter, moduloAulaRouter } from './aula.routes';
-import avaliacoesRouter from './avaliacao.routes'; // <-- Importe
-import { getAvaliacoesByItem } from '../controllers/avaliacao.controller'; // <-- Importe o controller específico
+import avaliacoesRouter from './avaliacao.routes';
+import { getAvaliacoesByItem } from '../controllers/avaliacao.controller'; 
+import progressoRoutes from './progresso.routes';
+import certificadoRoutes from './certificado.routes'
 
 const router = Router();
 
@@ -33,5 +35,8 @@ router.get('/cursos/:cursoId/avaliacoes', getAvaliacoesByItem);
 router.get('/modulos/:moduloId/avaliacoes', getAvaliacoesByItem);
 router.get('/aulas/:aulaId/avaliacoes', getAvaliacoesByItem);
 
+router.use('/progresso', progressoRoutes);
+
+router.use('/certificados', certificadoRoutes);
 
 export default router;
