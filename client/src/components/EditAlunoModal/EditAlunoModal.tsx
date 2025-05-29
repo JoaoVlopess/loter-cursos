@@ -5,13 +5,13 @@ import styles from '../EditAlunoModal/EditAlunoModal.module.css'; // Ajuste o ca
 type AlunoFormData = {
   nome: string;
   email: string;
-  // matricula?: string; // Removido
-  // cpf?: string; // Removido
+  cpf?: string; // Adicionado CPF
   data_nascimento?: string; // Formato YYYY-MM-DD
   senha?: string; // Apenas para criação
   ativo: boolean;
 };
-type Aluno = Usuario & { matricula?: string; data_nascimento?: string; }; // CPF removido do tipo Aluno para props
+// CPF adicionado ao tipo Aluno para props, pois o backend o utiliza
+type Aluno = Usuario & { matricula?: string; data_nascimento?: string; cpf?: string; };
 
 interface EditAlunoModalProps {
   isOpen: boolean;
@@ -24,8 +24,7 @@ interface EditAlunoModalProps {
 export const EditAlunoModal: React.FC<EditAlunoModalProps> = ({ isOpen, onClose, aluno, onSave, onDelete }) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
-  // const [matricula, setMatricula] = useState(''); // Removido
-  // const [cpf, setCpf] = useState(''); // Removido
+  const [cpf, setCpf] = useState(''); // Estado para CPF
   const [dataNascimento, setDataNascimento] = useState('');
   const [senha, setSenha] = useState('');
   const [ativo, setAtivo] = useState(true);
@@ -34,16 +33,14 @@ export const EditAlunoModal: React.FC<EditAlunoModalProps> = ({ isOpen, onClose,
     if (aluno) {
       setNome(aluno.nome);
       setEmail(aluno.email);
-      // setMatricula(aluno.matricula || ''); // Removido
-      // setCpf(aluno.cpf || ''); // Removido
+      setCpf(aluno.cpf || ''); // Popular CPF
       setDataNascimento(aluno.data_nascimento || '');
       setSenha(''); // Senha não é preenchida na edição
       setAtivo(aluno.ativo);
     } else {
       setNome('');
       setEmail('');
-      // setMatricula(''); // Removido
-      // setCpf(''); // Removido
+      setCpf(''); // Limpar CPF
       setDataNascimento('');
       setSenha('');
       setAtivo(true);
@@ -64,16 +61,20 @@ export const EditAlunoModal: React.FC<EditAlunoModalProps> = ({ isOpen, onClose,
       alert("Formato de email inválido.");
       return;
     }
-    // Validações para CPF e Data de Nascimento podem ser adicionadas aqui se necessário
+    // Validação básica para CPF (pode ser mais robusta)
+    if (!aluno && (!cpf || cpf.trim().length === 0)) { // CPF obrigatório para novo aluno
+        alert("CPF é obrigatório para novos alunos.");
+        return;
+    }
 
     if (!aluno && !senha) { // Senha obrigatória apenas para novo aluno
         alert("Senha é obrigatória para novos alunos.");
         return;
     }
-
     onSave(
       { nome, email,
         ativo,
+        cpf: cpf || undefined, // Incluir CPF
         data_nascimento: dataNascimento || undefined,
         senha: senha || undefined, // Enviar senha apenas se preenchida (para criação)
       },
@@ -94,7 +95,8 @@ export const EditAlunoModal: React.FC<EditAlunoModalProps> = ({ isOpen, onClose,
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}><label htmlFor="aluno-nome">Nome:</label><input type="text" id="aluno-nome" value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
           <div className={styles.formGroup}><label htmlFor="aluno-email">Email:</label><input type="email" id="aluno-email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          {!aluno && <div className={styles.formGroup}><label htmlFor="aluno-senha">Senha:</label><input type="password" id="aluno-senha" value={senha} onChange={(e) => setSenha(e.target.value)} required={!aluno} /></div>}          
+          {!aluno && <div className={styles.formGroup}><label htmlFor="aluno-senha">Senha:</label><input type="password" id="aluno-senha" value={senha} onChange={(e) => setSenha(e.target.value)} required={!aluno} /></div>}
+          <div className={styles.formGroup}><label htmlFor="aluno-cpf">CPF:</label><input type="text" id="aluno-cpf" value={cpf} onChange={(e) => setCpf(e.target.value)} required={!aluno} /></div>
           <div className={styles.formGroup}><label htmlFor="aluno-dataNascimento">Data de Nascimento:</label><input type="date" id="aluno-dataNascimento" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} /></div>
           <div className={styles.formGroup}>
             <label htmlFor="aluno-ativo">Ativo:</label>

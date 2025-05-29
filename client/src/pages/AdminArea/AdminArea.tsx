@@ -44,7 +44,7 @@ export const AdminArea = () => {
 
   // State for data
   const [cursosData, setCursosData] = useState<Curso[]>([]); {/*lista de todos cursos*/}
-  const [professoresData, setProfessoresData] = useState<(Usuario & { especialidade?: string })[]>([]); {/*lista de todos professores*/}
+  const [professoresData, setProfessoresData] = useState<(Usuario & { especialidade?: string; id_professor?: number })[]>([]); {/*lista de todos professores*/}
   const [alunosData, setAlunosData] = useState<(Usuario & { matricula?: string })[]>([]); {/*lista de todos alunos*/}
 
   const API_URL_BASE = 'http://localhost:3000'; // Mova para o escopo do componente para reuso
@@ -103,12 +103,12 @@ export const AdminArea = () => {
 
   const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
   // Align state type with EditProfessorModalProps
-  const [editingProfessor, setEditingProfessor] = useState<(Usuario & { especialidade?: string; data_nascimento?: string; }) | null>(null);
+  const [editingProfessor, setEditingProfessor] = useState<(Usuario & { especialidade?: string; data_nascimento?: string; cpf?: string; }) | null>(null);
 
   const [isAlunoModalOpen, setIsAlunoModalOpen] = useState(false);
   // Align state type with EditAlunoModalProps
-  // Note: EditAlunoModal's Aluno type is `Usuario & { matricula?: string; data_nascimento?: string; }`
-  const [editingAluno, setEditingAluno] = useState<(Usuario & { matricula?: string; data_nascimento?: string; }) | null>(null);
+  // Note: EditAlunoModal's Aluno type now includes cpf
+  const [editingAluno, setEditingAluno] = useState<(Usuario & { matricula?: string; data_nascimento?: string; cpf?: string; }) | null>(null);
 
   // --- Modal Open/Close Handlers ---
   const openAddCursoModal = () => { setEditingCurso(null); setIsCursoModalOpen(true); };
@@ -125,10 +125,12 @@ export const AdminArea = () => {
       // or the modal's internal useEffect will handle it (e.g., by setting to '' if invalid for date input).
       processedDob = prof.data_nascimento;
     }
+    const processedCpf = prof.cpf ?? undefined; // Convert null cpf to undefined
     // If prof.data_nascimento is null, processedDob remains undefined.
     setEditingProfessor({
       ...prof,
       data_nascimento: processedDob, // Ensure data_nascimento is string | undefined
+      cpf: processedCpf, // Ensure cpf is string | undefined
     });
     setIsProfessorModalOpen(true);
   };
@@ -142,17 +144,19 @@ export const AdminArea = () => {
     } else if (typeof aluno.data_nascimento === 'string') {
       processedDob = aluno.data_nascimento;
     }
+    const processedCpf = aluno.cpf ?? undefined;
     // If aluno.data_nascimento is null, processedDob remains undefined.
     setEditingAluno({
       ...aluno,
       data_nascimento: processedDob, // Ensure data_nascimento is string | undefined
+      cpf: processedCpf, // Ensure cpf is string | undefined
     });
     setIsAlunoModalOpen(true);
   };
   const closeAlunoModal = () => setIsAlunoModalOpen(false);
 
   // --- Save Handlers ---
-  const handleSaveCurso = async (data: Omit<Curso, 'id_curso' | 'modulos'>, cursoId?: number) => {
+  const handleSaveCurso = async (data: Pick<Curso, 'titulo' | 'descricao' | 'id_professor' | 'carga_horaria'>, cursoId?: number) => {
     const token = localStorage.getItem('authToken');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     if (!token) {
@@ -165,18 +169,14 @@ export const AdminArea = () => {
         const response = await axios.put(`${API_URL_BASE}/cursos/${cursoId}`, data, { headers });
         if (response.data.success) {
           setCursosData(prev => prev.map(c => c.id_curso === cursoId ? { ...c, ...data, id_curso: cursoId } : c));
-          closeCursoModal();
         } else {
           throw new Error(response.data.message || 'Falha ao atualizar curso.');
         }
       } else { // Criar novo curso
         const response = await axios.post(`${API_URL_BASE}/cursos`, data, { headers });
         if (response.data.success && response.data.id_curso) {
-          // A API deve retornar o curso completo ou pelo menos o ID
-          // Para simplificar, adicionamos o que temos, mas o ideal é o objeto completo
-          const novoCurso: Curso = { ...data, id_curso: response.data.id_curso, modulos: [] }; // Adiciona modulos vazio
+          const novoCurso: Curso = { ...data, id_curso: response.data.id_curso, modulos: [] };
           setCursosData(prev => [...prev, novoCurso]);
-          closeCursoModal();
         } else {
           throw new Error(response.data.message || 'Falha ao criar curso.');
         }
@@ -191,6 +191,8 @@ export const AdminArea = () => {
       }
       console.error("Erro ao salvar curso:", error);
       setError(errorMessage);
+    } finally {
+      closeCursoModal();
     }
   };
 
@@ -217,23 +219,24 @@ export const AdminArea = () => {
         const response = await axios.put(`${API_URL_BASE}/usuarios/${professorId}`, updateData, { headers });
         if (response.data.success) {
           setProfessoresData(prev => prev.map(p => p.id_usuario === professorId ? { ...p, ...data, id_usuario: professorId, tipo: 'PROFESSOR' } : p));
-          closeProfessorModal();
         } else {
           throw new Error(response.data.message || 'Falha ao atualizar professor.');
         }
       } else { // Criar
         // Para criar, o backend espera: nome, cpf, email, senha, data_nascimento, tipo, especialidade
         // Certifique-se que o modal coleta todos os campos obrigatórios ou ajuste o backend.
-        if (!data.email || !data.nome /*|| !data.cpf || !data.senha || !data.data_nascimento*/) {
-            setError("Campos obrigatórios (ex: Nome, Email, CPF, Senha, Data Nasc.) não preenchidos para novo professor.");
-            // alert("Campos obrigatórios (ex: Nome, Email, CPF, Senha, Data Nasc.) não preenchidos para novo professor.");
+        // Adicionando validação para CPF e Senha na criação
+        if (!data.email || !data.nome || !data.cpf || !data.senha) {
+            const missingFields = ["Nome", "Email", "CPF", "Senha"].filter(field => 
+                (field === "Nome" && !data.nome) || (field === "Email" && !data.email) || (field === "CPF" && !data.cpf) || (field === "Senha" && !data.senha)
+            ).join(', ');
+            setError(`Campos obrigatórios (${missingFields}) não preenchidos para novo professor.`);
             return;
         }
         const response = await axios.post(`${API_URL_BASE}/usuarios`, professorPayload, { headers });
         if (response.data.success && response.data.id_usuario) {
           const novoProfessor = { ...data, id_usuario: response.data.id_usuario, tipo: 'PROFESSOR' } as (Usuario & { especialidade?: string });
           setProfessoresData(prev => [...prev, novoProfessor]);
-          closeProfessorModal();
         } else {
           throw new Error(response.data.message || 'Falha ao criar professor.');
         }
@@ -248,6 +251,8 @@ export const AdminArea = () => {
       }
       console.error("Erro ao salvar professor:", error);
       setError(errorMessage);
+    } finally {
+      closeProfessorModal();
     }
   };
 
@@ -258,12 +263,9 @@ export const AdminArea = () => {
       setError("Autenticação necessária para salvar.");
       return;
     }
-    // O backend createUsuarioByAdmin não suporta 'ALUNO'.
-    // Para criar aluno por admin, o backend precisaria de um endpoint/lógica.
-    // Assumindo que PUT /usuarios/:id pode atualizar nome, email, ativo.
-    // 'matricula' não é parte do 'usuario' genérico no backend.
 
-    const alunoPayload: typeof data & { tipo: 'ALUNO' } = {
+    // Payload para criar ou atualizar. Para criação, o backend espera cpf, senha, etc.
+    const alunoPayload: Omit<typeof data, 'matricula'> & { tipo: 'ALUNO' } = { // Omit 'matricula' as it's not part of Usuario base
         ...data,
         tipo: 'ALUNO', // Necessário se o endpoint de criação for genérico
     };
@@ -274,26 +276,27 @@ export const AdminArea = () => {
         const response = await axios.put(`${API_URL_BASE}/usuarios/${alunoId}`, updateData, { headers });
         if (response.data.success) {
           setAlunosData(prev => prev.map(a => a.id_usuario === alunoId ? { ...a, ...data, id_usuario: alunoId, tipo: 'ALUNO' } : a));
-          closeAlunoModal();
         } else {
           throw new Error(response.data.message || 'Falha ao atualizar aluno.');
         }
       } else { // Criar
-        // ESTE BLOCO REQUER UM ENDPOINT NO BACKEND QUE PERMITA ADMIN CRIAR ALUNO
-        // O endpoint /usuarios (createUsuarioByAdmin) não suporta tipo 'ALUNO'.
-        // Se você tiver um endpoint como /auth/register que um admin possa usar com privilégios, ou um novo endpoint.
-        setError("Funcionalidade de criar novo aluno pelo painel admin não implementada no backend ou requer endpoint específico.");
-        console.warn("Tentativa de criar aluno via admin: backend não suporta 'ALUNO' em createUsuarioByAdmin. Payload:", alunoPayload);
-        // Exemplo de como seria se o backend suportasse:
-        // const response = await axios.post(`${API_URL_BASE}/usuarios/admin/criar-aluno`, alunoPayload, { headers });
-        // if (response.data.success && response.data.id_usuario) {
-        //   const novoAluno = { ...data, id_usuario: response.data.id_usuario, tipo: 'ALUNO' } as (Usuario & { matricula?: string });
-        //   setAlunosData(prev => [...prev, novoAluno]);
-        //   closeAlunoModal();
-        // } else {
-        //   throw new Error(response.data.message || 'Falha ao criar aluno.');
-        // }
-        return; // Retorna pois a funcionalidade não está completa sem backend
+        // Assumindo que o backend /usuarios (createUsuarioByAdmin) foi atualizado para aceitar tipo 'ALUNO'
+        // e espera nome, cpf, email, senha, data_nascimento, tipo.
+        if (!alunoPayload.email || !alunoPayload.nome || !alunoPayload.cpf || !alunoPayload.senha) {
+            const missingFields = ["Nome", "Email", "CPF", "Senha"].filter(field =>
+                (field === "Nome" && !alunoPayload.nome) || (field === "Email" && !alunoPayload.email) ||
+                (field === "CPF" && !alunoPayload.cpf) || (field === "Senha" && !alunoPayload.senha)
+            ).join(', ');
+            setError(`Campos obrigatórios (${missingFields}) não preenchidos para novo aluno.`);
+            return; // Não fecha o modal, permite ao usuário corrigir
+        }
+        const response = await axios.post(`${API_URL_BASE}/usuarios`, alunoPayload, { headers });
+        if (response.data.success && response.data.id_usuario) {
+          const novoAluno = { ...data, id_usuario: response.data.id_usuario, tipo: 'ALUNO' } as (Usuario & { matricula?: string; cpf?: string });
+          setAlunosData(prev => [...prev, novoAluno]);
+        } else {
+          throw new Error(response.data.message || 'Falha ao criar aluno.');
+        }
       }
     } catch (error: unknown) {
       let errorMessage = "Erro ao salvar aluno.";
@@ -305,6 +308,8 @@ export const AdminArea = () => {
       }
       console.error("Erro ao salvar aluno:", error);
       setError(errorMessage);
+    } finally {
+      closeAlunoModal();
     }
   };
 
@@ -566,6 +571,7 @@ export const AdminArea = () => {
           isOpen={isCursoModalOpen}
           onClose={closeCursoModal}
           curso={editingCurso}
+          professores={professoresData} // Passa a lista de professores
           onSave={handleSaveCurso}
           onDelete={handleDeleteCursoById}
         />

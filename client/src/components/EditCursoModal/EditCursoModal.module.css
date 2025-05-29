@@ -44,7 +44,8 @@
 .formGroup input[type="number"],
 .formGroup input[type="url"],
 .formGroup textarea,
-.formGroup select {
+.formGroup select,
+.selectField { /* Adicionado para estilizar o select especificamente se necessário, ou pode usar .formGroup select */
   width: 100%;
   padding: 10px;
   border: 1px solid #555; /* Borda sutil */
@@ -102,4 +103,3 @@
 .deleteButton:hover {
   background-color: #e53935;
 }
-

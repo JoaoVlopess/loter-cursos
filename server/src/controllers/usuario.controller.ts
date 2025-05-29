@@ -108,8 +108,8 @@ export const createUsuarioByAdmin = async (req: Request, res: Response, next: Ne
     const { nome, cpf, email, senha, data_nascimento, tipo, especialidade, cargo } = req.body;
 
     // A validação do TIPO ainda existe, mas não a verificação de QUEM está criando.
-    if (tipo !== 'PROFESSOR' && tipo !== 'ADMIN') {
-        res.status(400).json({ success: false, message: 'Apenas Professores ou Admins podem ser criados.' });
+    if (tipo !== 'PROFESSOR' && tipo !== 'ADMIN' && tipo !== 'ALUNO') { // Adicionado 'ALUNO'
+        res.status(400).json({ success: false, message: 'Tipo de usuário inválido. Apenas Alunos, Professores ou Admins podem ser criados por esta rota.' });
         return;
     }
     // ... (resto das validações de entrada)...
@@ -129,9 +129,10 @@ export const createUsuarioByAdmin = async (req: Request, res: Response, next: Ne
         const id_usuario = result.insertId;
         if (tipo === 'PROFESSOR') {
             await connection.execute( `INSERT INTO professor (id_usuario, especialidade) VALUES (?, ?)`, [id_usuario, especialidade]);
-        } else {
+        } else if (tipo === 'ADMIN') { // Alterado para else if para tratar ADMIN explicitamente
             await connection.execute( `INSERT INTO administrador (id_usuario, cargo) VALUES (?, ?)`, [id_usuario, cargo]);
         }
+        // Se tipo for 'ALUNO', nenhuma inserção adicional em tabelas específicas é necessária aqui.
         await connection.commit(); connection.release();
         res.status(201).json({ success: true, id_usuario: id_usuario, message: `Usuário ${tipo} criado com sucesso.` });
     } catch (err: any) {
