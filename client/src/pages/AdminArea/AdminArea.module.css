@@ -109,3 +109,13 @@
   color: #fff; /* Cor do texto */
   font-size: 1rem; /* Tamanho da fonte */
 }
+
+.inline_add_link_button {
+  background: none;
+  border: none;
+  color: #87cefa; /* LightSkyBlue, mesma cor do botão de adicionar na lista */
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit; /* Herda o tamanho da fonte do parágrafo */
+}

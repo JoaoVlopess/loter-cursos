@@ -35,14 +35,18 @@
   background-color: rgba(70, 130, 180, 0.3);
 }
 
-.add_item_link {
+.add_item_link_button {
   color: #87cefa; /* LightSkyBlue */
   text-decoration: none;
   font-weight: 500;
   display: block;
   width: 100%;
   text-align: center;
-  padding: 5px 0; /* Adiciona um pouco de padding interno ao link */
+  padding: 10px 0; /* Aumenta o padding para melhor clique */
+  background: none; /* Remove fundo padrão de botão */
+  border: none; /* Remove borda padrão de botão */
+  cursor: pointer; /* Muda cursor para indicar clicabilidade */
+  font-size: 1rem; /* Ajusta tamanho da fonte se necessário */
 }
 
 .admin_list_item_actions {

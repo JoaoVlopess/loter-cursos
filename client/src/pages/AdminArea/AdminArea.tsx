@@ -1,14 +1,17 @@
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
 import type { Curso } from "../../types/Curso/curso";
-import { Link } from "react-router-dom";
-import { useState } from "react"; // Importar useState
+import { useState } from "react";
 import styles from "./AdminArea.module.css";
 import type { Usuario } from "../../types/Clientes/usuario";
 import { AdminList } from "../../components/AdminList/AdminList";
+import { EditCursoModal } from "../../components/EditCursoModal/EditCursoModal";
+import { EditProfessorModal } from "../../components/EditProfessorModal/EditProfessorModal";
+import { EditAlunoModal } from "../../components/EditAlunoModal/EditAlunoModal";
 
 
-const cursos: Curso[] = [
+
+const initialCursosData: Curso[] = [
   {
     id_curso: 1,
     titulo: "Fundamentos de React",
@@ -76,7 +79,7 @@ const cursos: Curso[] = [
 ];
 
 // Dados de exemplo para Professores (baseados no tipo Usuario)
-const professoresData: (Usuario & { especialidade?: string })[] = [
+const initialProfessoresData: (Usuario & { especialidade?: string })[] = [
   { id_usuario: 1, nome: "Dr. Ana Silva", email: "ana.silva@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "React, Frontend" },
   { id_usuario: 2, nome: "Prof. Carlos Lima", email: "carlos.lima@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "Python, Inteligência Artificial" },
   { id_usuario: 3, nome: "Msc. Beatriz Costa", email: "beatriz.costa@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "Banco de Dados, Web Avançado" },
@@ -84,7 +87,7 @@ const professoresData: (Usuario & { especialidade?: string })[] = [
 ];
 
 // Dados de exemplo para Alunos (baseados no tipo Usuario)
-const alunosData: (Usuario & { matricula?: string })[] = [
+const initialAlunosData: (Usuario & { matricula?: string })[] = [
   { id_usuario: 101, nome: "João Pereira Silva", email: "joao.p@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023001" },
   { id_usuario: 102, nome: "Maria Oliveira Santos", email: "maria.o@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023002" },
   { id_usuario: 103, nome: "Pedro Santos Souza", email: "pedro.s@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023003" },
@@ -100,7 +103,7 @@ type ListItemType = Curso | (Usuario & { especialidade?: string }) | (Usuario & 
 interface ViewConfig {
   title: string;
   addItemLabel: string;
-  addItemLink: string;
+  onAddNewItem: () => void;
   data: ListItemType[]; // Usa ListItemType[] para os dados
   nameKey: "titulo" | "nome"; // Torna nameKey mais específico
 }
@@ -109,33 +112,112 @@ export const AdminArea = () => {
   const [activeView, setActiveView] = useState<AdminView>('cursos');
   const [searchTerm, setSearchTerm] = useState('');
 
+
+  // State for data
+  const [cursosData, setCursosData] = useState<Curso[]>(initialCursosData);
+  const [professoresData, setProfessoresData] = useState<(Usuario & { especialidade?: string })[]>(initialProfessoresData);
+  const [alunosData, setAlunosData] = useState<(Usuario & { matricula?: string })[]>(initialAlunosData);
+
+  // State for Modals
+  const [isCursoModalOpen, setIsCursoModalOpen] = useState(false);
+  const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
+
+  const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
+  const [editingProfessor, setEditingProfessor] = useState<(Usuario & { especialidade?: string }) | null>(null);
+
+  const [isAlunoModalOpen, setIsAlunoModalOpen] = useState(false);
+  const [editingAluno, setEditingAluno] = useState<(Usuario & { matricula?: string }) | null>(null);
+
+  // --- Modal Open/Close Handlers ---
+  const openAddCursoModal = () => { setEditingCurso(null); setIsCursoModalOpen(true); };
+  const openEditCursoModal = (curso: Curso) => { setEditingCurso(curso); setIsCursoModalOpen(true); };
+  const closeCursoModal = () => setIsCursoModalOpen(false);
+
+  const openAddProfessorModal = () => { setEditingProfessor(null); setIsProfessorModalOpen(true); };
+  const openEditProfessorModal = (prof: Usuario & { especialidade?: string }) => { setEditingProfessor(prof); setIsProfessorModalOpen(true); };
+  const closeProfessorModal = () => setIsProfessorModalOpen(false);
+
+  const openAddAlunoModal = () => { setEditingAluno(null); setIsAlunoModalOpen(true); };
+  const openEditAlunoModal = (aluno: Usuario & { matricula?: string }) => { setEditingAluno(aluno); setIsAlunoModalOpen(true); };
+  const closeAlunoModal = () => setIsAlunoModalOpen(false);
+
+  // --- Save Handlers ---
+  const handleSaveCurso = (data: Omit<Curso, 'id_curso'>, cursoId?: number) => {
+    if (cursoId) {
+      setCursosData(prev => prev.map(c => c.id_curso === cursoId ? { ...c, ...data, id_curso: cursoId } : c));
+    } else {
+      const newId = cursosData.length > 0 ? Math.max(...cursosData.map(c => c.id_curso)) + 1 : 1;
+      setCursosData(prev => [...prev, { ...data, id_curso: newId }]);
+    }
+    closeCursoModal();
+  };
+
+  const handleSaveProfessor = (data: { nome: string; email: string; especialidade?: string; ativo: boolean }, professorId?: number) => {
+    const allUserIds = [...professoresData.map(p => p.id_usuario), ...alunosData.map(a => a.id_usuario)];
+    if (professorId) {
+      setProfessoresData(prev => prev.map(p => p.id_usuario === professorId ? { ...p, ...data, id_usuario: professorId, tipo: 'PROFESSOR' } : p));
+    } else {
+      const newId = allUserIds.length > 0 ? Math.max(0, ...allUserIds) + 1 : 1;
+      setProfessoresData(prev => [...prev, { ...data, id_usuario: newId, tipo: 'PROFESSOR' }]);
+    }
+    closeProfessorModal();
+  };
+
+  const handleSaveAluno = (data: { nome: string; email: string; matricula?: string; ativo: boolean }, alunoId?: number) => {
+    const allUserIds = [...professoresData.map(p => p.id_usuario), ...alunosData.map(a => a.id_usuario)];
+    if (alunoId) {
+      setAlunosData(prev => prev.map(a => a.id_usuario === alunoId ? { ...a, ...data, id_usuario: alunoId, tipo: 'ALUNO' } : a));
+    } else {
+      const newId = allUserIds.length > 0 ? Math.max(0, ...allUserIds) + 1 : 1;
+      setAlunosData(prev => [...prev, { ...data, id_usuario: newId, tipo: 'ALUNO' }]);
+    }
+    closeAlunoModal();
+  };
+
+  // --- Delete Handlers (called by modals or by AdminList's onDeleteItem) ---
+  const handleDeleteCursoById = (idCurso: number) => {
+    setCursosData(prevCursos => prevCursos.filter(c => c.id_curso !== idCurso));
+    closeCursoModal();
+  };
+
+  const handleDeleteProfessorById = (idUsuario: number) => {
+    setProfessoresData(prevProfessores => prevProfessores.filter(p => p.id_usuario !== idUsuario));
+    closeProfessorModal();
+  };
+
+  const handleDeleteAlunoById = (idUsuario: number) => {
+    setAlunosData(prevAlunos => prevAlunos.filter(a => a.id_usuario !== idUsuario));
+    closeAlunoModal();
+  };
+
   const viewConfigs: Record<AdminView, ViewConfig> = {
     cursos: {
       title: "Cursos Cadastrados",
       addItemLabel: "Adicionar Novo Curso",
-      addItemLink: "/admin/cursos/novo",
-      data: cursos,
+      onAddNewItem: openAddCursoModal,
+      data: cursosData,
       nameKey: "titulo",
     },
     professores: {
       title: "Professores Cadastrados",
       addItemLabel: "Adicionar Novo Professor",
-      addItemLink: "/admin/professores/novo",
-      data: professoresData,
+      onAddNewItem: openAddProfessorModal,
+      data: professoresData, // Use state variable
       nameKey: "nome",
     },
     alunos: {
       title: "Alunos Cadastrados",
       addItemLabel: "Adicionar Novo Aluno",
-      addItemLink: "/admin/alunos/novo",
-      data: alunosData,
+      onAddNewItem: openAddAlunoModal,
+      data: alunosData, // Use state variable
       nameKey: "nome",
     },
   };
 
   const currentConfig = viewConfigs[activeView];
 
-  const filteredData: ListItemType[] = currentConfig.data.filter((item: ListItemType) => {
+  const filteredData = currentConfig.data.filter((item: ListItemType) => {
+
     let valueToCompare: string = "";
     // Usa type guards para acessar a propriedade correta de forma segura
     if (currentConfig.nameKey === "titulo" && "titulo" in item) {
@@ -199,16 +281,37 @@ export const AdminArea = () => {
     }
   };
 
-    // Funções de exemplo para botões de ação (você precisará implementá-las)
-    const handleEditItem = (item: ListItemType) => {
-      console.log("Editar:", item);
-      // Navegar para a página de edição, por exemplo: navigate(`/admin/${activeView}/${getItemKey(item)}/editar`)
-    };
+  // Funções de exemplo para botões de ação (você precisará implementá-las)
+  const handleEditItem = (item: ListItemType) => {
+    switch (activeView) {
+      case 'cursos':
+        openEditCursoModal(item as Curso);
+        break;
+      case 'professores':
+        openEditProfessorModal(item as Usuario & { especialidade?: string });
+        break;
+      case 'alunos':
+        openEditAlunoModal(item as Usuario & { matricula?: string });
+        break;
+    }
+  };
 
-    const handleDeleteItem = (item: ListItemType) => {
-      console.log("Excluir:", item);
-      // Chamar API para excluir e atualizar a lista
-    };
+  const handleDeleteItemFromList = (item: ListItemType) => {
+    let itemName = '';
+    let deleteAction: (() => void) | undefined;
+
+    if (activeView === 'cursos' && 'id_curso' in item) {
+      itemName = (item as Curso).titulo;
+      deleteAction = () => handleDeleteCursoById((item as Curso).id_curso);
+    } else if ('id_usuario' in item && 'nome' in item) { // Professores e Alunos
+      itemName = (item as Usuario).nome;
+      deleteAction = activeView === 'professores' ? () => handleDeleteProfessorById(item.id_usuario) : () => handleDeleteAlunoById(item.id_usuario);
+    }
+
+    if (deleteAction && window.confirm(`Tem certeza que deseja excluir "${itemName}"? Esta ação não pode ser desfeita.`)) {
+      deleteAction();
+    }
+  };
 
   // TODO: No futuro, você provavelmente vai querer buscar os dados dos professores
   // para exibir o nome deles em vez do ID.
@@ -238,23 +341,50 @@ export const AdminArea = () => {
             {/* O componente AdminList já foi fornecido em uma interação anterior e é usado aqui */}
             {/* Supondo que AdminList esteja corretamente importado e funcional */}
             {filteredData.length > 0 || searchTerm ? (
-               <AdminList
+              <AdminList
                 items={filteredData}
                 renderItemContent={renderItemContent}
                 addItemLabel={currentConfig.addItemLabel}
-                addItemLink={currentConfig.addItemLink}
+                onAddItem={currentConfig.onAddNewItem}
                 itemKeyExtractor={getItemKey}
                 onEditItem={handleEditItem}
-                onDeleteItem={handleDeleteItem}
+                onDeleteItem={handleDeleteItemFromList}
               />
             ) : (
               <p style={{ color: '#ccc', textAlign: 'center', paddingTop: '20px' }}>
-                Nenhum item para exibir. <Link to={currentConfig.addItemLink} className={styles.inline_add_link}>Adicionar novo?</Link>
+                Nenhum item para exibir. <button onClick={currentConfig.onAddNewItem} className={styles.inline_add_link_button}>Adicionar novo?</button>
               </p>
             )}
           </div>
         </div>
       </div>
+      {isCursoModalOpen && (
+        <EditCursoModal
+          isOpen={isCursoModalOpen}
+          onClose={closeCursoModal}
+          curso={editingCurso}
+          onSave={handleSaveCurso}
+          onDelete={handleDeleteCursoById}
+        />
+      )}
+      {isProfessorModalOpen && (
+        <EditProfessorModal
+          isOpen={isProfessorModalOpen}
+          onClose={closeProfessorModal}
+          professor={editingProfessor}
+          onSave={handleSaveProfessor}
+          onDelete={handleDeleteProfessorById}
+        />
+      )}
+      {isAlunoModalOpen && (
+        <EditAlunoModal
+          isOpen={isAlunoModalOpen}
+          onClose={closeAlunoModal}
+          aluno={editingAluno}
+          onSave={handleSaveAluno}
+          onDelete={handleDeleteAlunoById}
+        />
+      )}
       <Footer />
     </div>
   );

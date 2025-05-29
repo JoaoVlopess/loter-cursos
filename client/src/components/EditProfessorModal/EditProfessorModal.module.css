@@ -1,0 +1,105 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: #2c2c2c; /* Cor de fundo escura para o conteúdo do modal */
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 500px; /* Largura máxima do modal */
+  color: #e0e0e0; /* Cor do texto clara */
+}
+
+.modalContent h2 {
+  margin-top: 0;
+  color: #ffffff; /* Título em branco */
+  border-bottom: 1px solid #444; /* Linha sutil abaixo do título */
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #cccccc; /* Cor dos labels */
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="email"],
+.formGroup input[type="url"],
+.formGroup textarea,
+.formGroup select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555; /* Borda sutil */
+  border-radius: 4px;
+  background-color: #383838; /* Fundo do input */
+  color: #e0e0e0; /* Texto do input */
+  box-sizing: border-box; /* Para incluir padding e border na largura/altura total */
+}
+
+.formGroup textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.modalActions button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.saveButton {
+  background-color: #4CAF50; /* Verde */
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #45a049;
+}
+
+.cancelButton {
+  background-color: #757575; /* Cinza */
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #616161;
+}
+
+.deleteButton {
+  background-color: #f44336; /* Vermelho */
+  color: white;
+  margin-right: auto; /* Alinha o botão de excluir à esquerda */
+}
+
+.deleteButton:hover {
+  background-color: #e53935;
+}

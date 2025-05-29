@@ -1,33 +1,33 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styles from './AdminList.module.css'; // Criaremos este CSS
 
 type AdminListProps<T> = {
   items: T[];
   renderItemContent: (item: T) => React.ReactNode; // Conteúdo principal do item
   addItemLabel: string;
-  addItemLink: string;
   itemKeyExtractor: (item: T) => string | number;
   onEditItem?: (item: T) => void; // Opcional: Função para editar
   onDeleteItem?: (item: T) => void; // Opcional: Função para deletar
+  onAddItem: () => void; // Função para adicionar novo item
+
 }
 
 export function AdminList<T>({
   items,
   renderItemContent,
   addItemLabel,
-  addItemLink,
   itemKeyExtractor,
   onEditItem,
   onDeleteItem,
+  onAddItem,
 }: AdminListProps<T>) {
 
   return (
     <ul className={styles.admin_list}>
       <li className={`${styles.admin_list_item} ${styles.admin_list_item_add}`}>
-        <Link to={addItemLink} className={styles.add_item_link}>
+        <button onClick={onAddItem} className={styles.add_item_link_button}>
           + {addItemLabel}
-        </Link>
+        </button>
       </li>
       {items.map((item) => (
         <li key={itemKeyExtractor(item)} className={styles.admin_list_item}>
