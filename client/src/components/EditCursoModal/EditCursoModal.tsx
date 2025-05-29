@@ -6,29 +6,29 @@ interface EditCursoModalProps {
   isOpen: boolean;
   onClose: () => void;
   curso: Curso | null;
-  onSave: (updatedData: Omit<Curso, 'id_curso'>, cursoId?: number) => void;
+  // Apenas titulo, descricao, id_professor são salvos
+  onSave: (updatedData: Pick<Curso, 'titulo' | 'descricao' | 'id_professor'>, cursoId?: number) => void;
   onDelete?: (idCurso: number) => void;
 }
 
 export const EditCursoModal: React.FC<EditCursoModalProps> = ({ isOpen, onClose, curso, onSave, onDelete }) => {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [cargaHoraria, setCargaHoraria] = useState<number | string>('');
+  // const [cargaHoraria, setCargaHoraria] = useState<number | string>(''); // Removido
   const [idProfessor, setIdProfessor] = useState<number | string>('');
-  const [modulos, setModulos] = useState<number | string>('');
+  // const [modulos, setModulos] = useState<number | string>(''); // Removido
 
   useEffect(() => {
     if (curso) {
       setTitulo(curso.titulo);
       setDescricao(curso.descricao || '');
       setIdProfessor(curso.id_professor);
-      setModulos(curso.modulos);
+      // setCargaHoraria(curso.carga_horaria); // Removido
+      // setModulos(curso.modulos?.length || 0); // Removido
     } else { // Modo Adição
       setTitulo('');
       setDescricao('');
-      setCargaHoraria('');
       setIdProfessor('');
-      setModulos('');
     }
   }, [curso, isOpen]);
 
@@ -38,20 +38,10 @@ export const EditCursoModal: React.FC<EditCursoModalProps> = ({ isOpen, onClose,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cargaHorariaNum = parseInt(String(cargaHoraria), 10);
     const idProfessorNum = parseInt(String(idProfessor), 10);
-    const modulosNum = parseInt(String(modulos), 10);
 
-    if (isNaN(cargaHorariaNum) || cargaHorariaNum <= 0) {
-      alert("Carga horária deve ser um número positivo.");
-      return;
-    }
-    if (isNaN(idProfessorNum)) {
-      alert("ID do Professor deve ser um número.");
-      return;
-    }
-    if (isNaN(modulosNum) || modulosNum < 0) {
-      alert("Número de módulos deve ser um número não negativo.");
+    if (isNaN(idProfessorNum) || idProfessorNum <= 0) {
+      alert("ID do Professor deve ser um número válido e positivo.");
       return;
     }
 
@@ -59,9 +49,7 @@ export const EditCursoModal: React.FC<EditCursoModalProps> = ({ isOpen, onClose,
       {
         titulo,
         descricao,
-        carga_horaria: cargaHorariaNum,
         id_professor: idProfessorNum,
-        modulos: modulosNum,
       },
       curso?.id_curso
     );
@@ -80,9 +68,7 @@ export const EditCursoModal: React.FC<EditCursoModalProps> = ({ isOpen, onClose,
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}><label htmlFor="curso-titulo">Título:</label><input type="text" id="curso-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required /></div>
           <div className={styles.formGroup}><label htmlFor="curso-descricao">Descrição:</label><textarea id="curso-descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
-          <div className={styles.formGroup}><label htmlFor="curso-carga-horaria">Carga Horária (horas):</label><input type="number" id="curso-carga-horaria" value={cargaHoraria} onChange={(e) => setCargaHoraria(e.target.value)} required min="1" /></div>
-          <div className={styles.formGroup}><label htmlFor="curso-id-professor">ID do Professor:</label><input type="number" id="curso-id-professor" value={idProfessor} onChange={(e) => setIdProfessor(e.target.value)} required /></div>
-          <div className={styles.formGroup}><label htmlFor="curso-modulos">Nº de Módulos:</label><input type="number" id="curso-modulos" value={modulos} onChange={(e) => setModulos(e.target.value)} required min="0" /></div>
+          <div className={styles.formGroup}><label htmlFor="curso-id-professor">ID do Professor:</label><input type="number" id="curso-id-professor" value={idProfessor} onChange={(e) => setIdProfessor(e.target.value)} required min="1"/></div>
           <div className={styles.modalActions}>
             {curso && onDelete && (<button type="button" onClick={handleDeleteClick} className={styles.deleteButton}>Excluir Curso</button>)}
             <button type="button" onClick={onClose} className={styles.cancelButton}>Cancelar</button>

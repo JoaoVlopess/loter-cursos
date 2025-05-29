@@ -1,99 +1,14 @@
+import { useEffect, useState } from "react";
+import axios, { AxiosError } from 'axios';
 import { Footer } from "../../components/Footer/Footer";
 import { NavBar } from "../../components/NavBar/Navbar";
 import type { Curso } from "../../types/Curso/curso";
-import { useState } from "react";
 import styles from "./AdminArea.module.css";
 import type { Usuario } from "../../types/Clientes/usuario";
 import { AdminList } from "../../components/AdminList/AdminList";
 import { EditCursoModal } from "../../components/EditCursoModal/EditCursoModal";
 import { EditProfessorModal } from "../../components/EditProfessorModal/EditProfessorModal";
 import { EditAlunoModal } from "../../components/EditAlunoModal/EditAlunoModal";
-
-
-
-const initialCursosData: Curso[] = [
-  {
-    id_curso: 1,
-    titulo: "Fundamentos de React",
-    descricao: "Aprenda os conceitos básicos do React, como componentes, props e estado.",
-    carga_horaria: 12,
-    id_professor: 1,
-    modulos: 5
-  },
-  {
-    id_curso: 2,
-    titulo: "Fundamentos de pyton",
-    descricao: "Aprenda os conceitos básicos do pyton, como IA.",
-    carga_horaria: 5,
-    id_professor: 3,
-    modulos: 10
-  },
-  {
-    id_curso: 3,
-    titulo: "Desenvolvimento Web Avançado",
-    descricao: "Explore tópicos avançados em desenvolvimento web.",
-    carga_horaria: 20,
-    id_professor: 2, // Professor diferente para exemplo
-    modulos: 8
-  },
-  {
-    id_curso: 4, // ID único
-    titulo: "Introdução à Análise de Dados",
-    descricao: "Conceitos iniciais sobre análise e visualização de dados.",
-    carga_horaria: 10,
-    id_professor: 3,
-    modulos: 6
-  },
-  {
-    id_curso: 5, // ID único
-    titulo: "Machine Learning Básico",
-    descricao: "Primeiros passos no mundo do Machine Learning.",
-    carga_horaria: 15,
-    id_professor: 2,
-    modulos: 7
-  },
-  {
-    id_curso: 6, // ID único
-    titulo: "Segurança da Informação Essencial - Nível 1",
-    descricao: "Proteja seus dados e sistemas.",
-    carga_horaria: 8,
-    id_professor: 1,
-    modulos: 4
-  },
-  {
-    id_curso: 7, // ID único corrigido
-    titulo: "Segurança da Informação Essencial - Nível 2",
-    descricao: "Proteja seus dados e sistemas.",
-    carga_horaria: 8,
-    id_professor: 1,
-    modulos: 4
-  },
-  {
-    id_curso: 8, // ID único corrigido
-    titulo: "Segurança da Informação Essencial - Nível 3",
-    descricao: "Proteja seus dados e sistemas.",
-    carga_horaria: 8,
-    id_professor: 1,
-    modulos: 4
-  },
-];
-
-// Dados de exemplo para Professores (baseados no tipo Usuario)
-const initialProfessoresData: (Usuario & { especialidade?: string })[] = [
-  { id_usuario: 1, nome: "Dr. Ana Silva", email: "ana.silva@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "React, Frontend" },
-  { id_usuario: 2, nome: "Prof. Carlos Lima", email: "carlos.lima@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "Python, Inteligência Artificial" },
-  { id_usuario: 3, nome: "Msc. Beatriz Costa", email: "beatriz.costa@example.com", ativo: true, tipo: 'PROFESSOR', especialidade: "Banco de Dados, Web Avançado" },
-  { id_usuario: 4, nome: "Dr. João Mendes", email: "joao.mendes@example.com", ativo: false, tipo: 'PROFESSOR', especialidade: "Análise de Dados" },
-];
-
-// Dados de exemplo para Alunos (baseados no tipo Usuario)
-const initialAlunosData: (Usuario & { matricula?: string })[] = [
-  { id_usuario: 101, nome: "João Pereira Silva", email: "joao.p@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023001" },
-  { id_usuario: 102, nome: "Maria Oliveira Santos", email: "maria.o@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023002" },
-  { id_usuario: 103, nome: "Pedro Santos Souza", email: "pedro.s@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023003" },
-  { id_usuario: 104, nome: "Sofia Almeida Lima", email: "sofia.a@example.com", ativo: false, tipo: 'ALUNO', matricula: "2023004" },
-  { id_usuario: 105, nome: "Lucas Ferreira Costa", email: "lucas.f@example.com", ativo: true, tipo: 'ALUNO', matricula: "2023005" },
-];
 
 type AdminView = 'cursos' | 'professores' | 'alunos';
 
@@ -108,25 +23,92 @@ interface ViewConfig {
   nameKey: "titulo" | "nome"; // Torna nameKey mais específico
 }
 
+interface ApiErrorData {
+  message: string;
+  success?: boolean;
+  // Adicione outros campos que sua API pode retornar em caso de erro
+}
+
+// Dados mockados removidos - serão buscados da API
+// const initialCursosData: Curso[] = [ ... ];
+// const initialProfessoresData: (Usuario & { especialidade?: string })[] = [ ... ];
+// const initialAlunosData: (Usuario & { matricula?: string })[] = [ ... ];
+
 export const AdminArea = () => {
   const [activeView, setActiveView] = useState<AdminView>('cursos');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // State for API data loading and errors
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // State for data
-  const [cursosData, setCursosData] = useState<Curso[]>(initialCursosData);
-  const [professoresData, setProfessoresData] = useState<(Usuario & { especialidade?: string })[]>(initialProfessoresData);
-  const [alunosData, setAlunosData] = useState<(Usuario & { matricula?: string })[]>(initialAlunosData);
+  const [cursosData, setCursosData] = useState<Curso[]>([]); {/*lista de todos cursos*/}
+  const [professoresData, setProfessoresData] = useState<(Usuario & { especialidade?: string })[]>([]); {/*lista de todos professores*/}
+  const [alunosData, setAlunosData] = useState<(Usuario & { matricula?: string })[]>([]); {/*lista de todos alunos*/}
+
+  const API_URL_BASE = 'http://localhost:3000'; // Mova para o escopo do componente para reuso
+
+  useEffect(() => {
+    const API_URL_BASE = 'http://localhost:3000'; // Certifique-se que esta URL está correta
+
+    const fetchAllData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('authToken'); // Ou a chave que você usa para guardar o token
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        if (!token) {
+          // Opcional: Redirecionar para login ou mostrar mensagem se não houver token
+          // Exemplo: setError("Usuário não autenticado. Faça login para acessar esta área.");
+          // setIsLoading(false);
+          // return; // Ou lançar um erro específico
+          throw new Error('Token de autenticação não encontrado. Faça o login.');
+        }
+
+        const [cursosRes, professoresRes, alunosRes] = await Promise.all([
+          axios.get<{ success: boolean, data: Curso[] }>(`${API_URL_BASE}/cursos`),
+          axios.get<{ success: boolean, data: (Usuario & { especialidade?: string; id_professor?: number })[] }>(`${API_URL_BASE}/usuarios/professores`, { headers }),
+          axios.get<{ success: boolean, data: Usuario[] }>(`${API_URL_BASE}/usuarios/alunos`, { headers })
+        ]);
+
+        if (cursosRes.data.success) setCursosData(cursosRes.data.data);
+        else throw new Error('Falha ao buscar cursos da API.');
+
+        if (professoresRes.data.success) setProfessoresData(professoresRes.data.data);
+        else throw new Error('Falha ao buscar professores da API.');
+
+        if (alunosRes.data.success) setAlunosData(alunosRes.data.data.map(aluno => ({ ...aluno, matricula: undefined }))); // Adiciona matricula para conformar ao tipo
+        else throw new Error('Falha ao buscar alunos da API.');
+
+      } catch (err) {
+        console.error("Erro ao buscar dados para AdminArea:", err);
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Ocorreu um erro desconhecido ao carregar os dados. Verifique a conexão com a API.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []); // Array de dependências vazio para rodar apenas na montagem inicial
 
   // State for Modals
   const [isCursoModalOpen, setIsCursoModalOpen] = useState(false);
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
 
   const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
-  const [editingProfessor, setEditingProfessor] = useState<(Usuario & { especialidade?: string }) | null>(null);
+  // Align state type with EditProfessorModalProps
+  const [editingProfessor, setEditingProfessor] = useState<(Usuario & { especialidade?: string; data_nascimento?: string; }) | null>(null);
 
   const [isAlunoModalOpen, setIsAlunoModalOpen] = useState(false);
-  const [editingAluno, setEditingAluno] = useState<(Usuario & { matricula?: string }) | null>(null);
+  // Align state type with EditAlunoModalProps
+  // Note: EditAlunoModal's Aluno type is `Usuario & { matricula?: string; data_nascimento?: string; }`
+  const [editingAluno, setEditingAluno] = useState<(Usuario & { matricula?: string; data_nascimento?: string; }) | null>(null);
 
   // --- Modal Open/Close Handlers ---
   const openAddCursoModal = () => { setEditingCurso(null); setIsCursoModalOpen(true); };
@@ -134,60 +116,277 @@ export const AdminArea = () => {
   const closeCursoModal = () => setIsCursoModalOpen(false);
 
   const openAddProfessorModal = () => { setEditingProfessor(null); setIsProfessorModalOpen(true); };
-  const openEditProfessorModal = (prof: Usuario & { especialidade?: string }) => { setEditingProfessor(prof); setIsProfessorModalOpen(true); };
+  const openEditProfessorModal = (prof: Usuario & { especialidade?: string }) => {
+    let processedDob: string | undefined = undefined;
+    if (prof.data_nascimento instanceof Date) {
+      processedDob = prof.data_nascimento.toISOString().split('T')[0];
+    } else if (typeof prof.data_nascimento === 'string') {
+      // Assuming if it's a string, it's either in 'YYYY-MM-DD' format
+      // or the modal's internal useEffect will handle it (e.g., by setting to '' if invalid for date input).
+      processedDob = prof.data_nascimento;
+    }
+    // If prof.data_nascimento is null, processedDob remains undefined.
+    setEditingProfessor({
+      ...prof,
+      data_nascimento: processedDob, // Ensure data_nascimento is string | undefined
+    });
+    setIsProfessorModalOpen(true);
+  };
   const closeProfessorModal = () => setIsProfessorModalOpen(false);
 
   const openAddAlunoModal = () => { setEditingAluno(null); setIsAlunoModalOpen(true); };
-  const openEditAlunoModal = (aluno: Usuario & { matricula?: string }) => { setEditingAluno(aluno); setIsAlunoModalOpen(true); };
+  const openEditAlunoModal = (aluno: Usuario & { matricula?: string }) => {
+    let processedDob: string | undefined = undefined;
+    if (aluno.data_nascimento instanceof Date) {
+      processedDob = aluno.data_nascimento.toISOString().split('T')[0];
+    } else if (typeof aluno.data_nascimento === 'string') {
+      processedDob = aluno.data_nascimento;
+    }
+    // If aluno.data_nascimento is null, processedDob remains undefined.
+    setEditingAluno({
+      ...aluno,
+      data_nascimento: processedDob, // Ensure data_nascimento is string | undefined
+    });
+    setIsAlunoModalOpen(true);
+  };
   const closeAlunoModal = () => setIsAlunoModalOpen(false);
 
   // --- Save Handlers ---
-  const handleSaveCurso = (data: Omit<Curso, 'id_curso'>, cursoId?: number) => {
-    if (cursoId) {
-      setCursosData(prev => prev.map(c => c.id_curso === cursoId ? { ...c, ...data, id_curso: cursoId } : c));
-    } else {
-      const newId = cursosData.length > 0 ? Math.max(...cursosData.map(c => c.id_curso)) + 1 : 1;
-      setCursosData(prev => [...prev, { ...data, id_curso: newId }]);
+  const handleSaveCurso = async (data: Omit<Curso, 'id_curso' | 'modulos'>, cursoId?: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) {
+      setError("Autenticação necessária para salvar.");
+      return;
     }
-    closeCursoModal();
+
+    try {
+      if (cursoId) { // Atualizar curso existente
+        const response = await axios.put(`${API_URL_BASE}/cursos/${cursoId}`, data, { headers });
+        if (response.data.success) {
+          setCursosData(prev => prev.map(c => c.id_curso === cursoId ? { ...c, ...data, id_curso: cursoId } : c));
+          closeCursoModal();
+        } else {
+          throw new Error(response.data.message || 'Falha ao atualizar curso.');
+        }
+      } else { // Criar novo curso
+        const response = await axios.post(`${API_URL_BASE}/cursos`, data, { headers });
+        if (response.data.success && response.data.id_curso) {
+          // A API deve retornar o curso completo ou pelo menos o ID
+          // Para simplificar, adicionamos o que temos, mas o ideal é o objeto completo
+          const novoCurso: Curso = { ...data, id_curso: response.data.id_curso, modulos: [] }; // Adiciona modulos vazio
+          setCursosData(prev => [...prev, novoCurso]);
+          closeCursoModal();
+        } else {
+          throw new Error(response.data.message || 'Falha ao criar curso.');
+        }
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao salvar curso.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar curso.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao salvar curso:", error);
+      setError(errorMessage);
+    }
   };
 
-  const handleSaveProfessor = (data: { nome: string; email: string; especialidade?: string; ativo: boolean }, professorId?: number) => {
-    const allUserIds = [...professoresData.map(p => p.id_usuario), ...alunosData.map(a => a.id_usuario)];
-    if (professorId) {
-      setProfessoresData(prev => prev.map(p => p.id_usuario === professorId ? { ...p, ...data, id_usuario: professorId, tipo: 'PROFESSOR' } : p));
-    } else {
-      const newId = allUserIds.length > 0 ? Math.max(0, ...allUserIds) + 1 : 1;
-      setProfessoresData(prev => [...prev, { ...data, id_usuario: newId, tipo: 'PROFESSOR' }]);
+  const handleSaveProfessor = async (data: { nome: string; email: string; especialidade?: string; ativo: boolean; cpf?: string; senha?: string; data_nascimento?: string }, professorId?: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) {
+      setError("Autenticação necessária para salvar.");
+      return;
     }
-    closeProfessorModal();
+
+    // Campos que o backend espera para criação via createUsuarioByAdmin
+    const professorPayload: typeof data & { tipo: 'PROFESSOR' } = {
+      ...data,
+      tipo: 'PROFESSOR',
+    };    
+
+    try {
+      if (professorId) { // Atualizar
+        // O endpoint de update /usuarios/:id pode não aceitar 'tipo' ou 'email' diretamente.
+        // Ajuste o payload conforme o que seu endpoint PUT /usuarios/:id aceita.
+        // Ex: delete professorPayload.tipo; delete professorPayload.email; (se não forem atualizáveis)
+        const updateData = { nome: data.nome, especialidade: data.especialidade, ativo: data.ativo, cpf: data.cpf, data_nascimento: data.data_nascimento };
+        const response = await axios.put(`${API_URL_BASE}/usuarios/${professorId}`, updateData, { headers });
+        if (response.data.success) {
+          setProfessoresData(prev => prev.map(p => p.id_usuario === professorId ? { ...p, ...data, id_usuario: professorId, tipo: 'PROFESSOR' } : p));
+          closeProfessorModal();
+        } else {
+          throw new Error(response.data.message || 'Falha ao atualizar professor.');
+        }
+      } else { // Criar
+        // Para criar, o backend espera: nome, cpf, email, senha, data_nascimento, tipo, especialidade
+        // Certifique-se que o modal coleta todos os campos obrigatórios ou ajuste o backend.
+        if (!data.email || !data.nome /*|| !data.cpf || !data.senha || !data.data_nascimento*/) {
+            setError("Campos obrigatórios (ex: Nome, Email, CPF, Senha, Data Nasc.) não preenchidos para novo professor.");
+            // alert("Campos obrigatórios (ex: Nome, Email, CPF, Senha, Data Nasc.) não preenchidos para novo professor.");
+            return;
+        }
+        const response = await axios.post(`${API_URL_BASE}/usuarios`, professorPayload, { headers });
+        if (response.data.success && response.data.id_usuario) {
+          const novoProfessor = { ...data, id_usuario: response.data.id_usuario, tipo: 'PROFESSOR' } as (Usuario & { especialidade?: string });
+          setProfessoresData(prev => [...prev, novoProfessor]);
+          closeProfessorModal();
+        } else {
+          throw new Error(response.data.message || 'Falha ao criar professor.');
+        }
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao salvar professor.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar professor.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao salvar professor:", error);
+      setError(errorMessage);
+    }
   };
 
-  const handleSaveAluno = (data: { nome: string; email: string; matricula?: string; ativo: boolean }, alunoId?: number) => {
-    const allUserIds = [...professoresData.map(p => p.id_usuario), ...alunosData.map(a => a.id_usuario)];
-    if (alunoId) {
-      setAlunosData(prev => prev.map(a => a.id_usuario === alunoId ? { ...a, ...data, id_usuario: alunoId, tipo: 'ALUNO' } : a));
-    } else {
-      const newId = allUserIds.length > 0 ? Math.max(0, ...allUserIds) + 1 : 1;
-      setAlunosData(prev => [...prev, { ...data, id_usuario: newId, tipo: 'ALUNO' }]);
+  const handleSaveAluno = async (data: { nome: string; email: string; matricula?: string; ativo: boolean; cpf?: string; senha?: string; data_nascimento?: string }, alunoId?: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) {
+      setError("Autenticação necessária para salvar.");
+      return;
     }
-    closeAlunoModal();
+    // O backend createUsuarioByAdmin não suporta 'ALUNO'.
+    // Para criar aluno por admin, o backend precisaria de um endpoint/lógica.
+    // Assumindo que PUT /usuarios/:id pode atualizar nome, email, ativo.
+    // 'matricula' não é parte do 'usuario' genérico no backend.
+
+    const alunoPayload: typeof data & { tipo: 'ALUNO' } = {
+        ...data,
+        tipo: 'ALUNO', // Necessário se o endpoint de criação for genérico
+    };
+
+    try {
+      if (alunoId) { // Atualizar
+         const updateData = { nome: data.nome, ativo: data.ativo, cpf: data.cpf, data_nascimento: data.data_nascimento }; // Email geralmente não se atualiza assim, ou requer confirmação
+        const response = await axios.put(`${API_URL_BASE}/usuarios/${alunoId}`, updateData, { headers });
+        if (response.data.success) {
+          setAlunosData(prev => prev.map(a => a.id_usuario === alunoId ? { ...a, ...data, id_usuario: alunoId, tipo: 'ALUNO' } : a));
+          closeAlunoModal();
+        } else {
+          throw new Error(response.data.message || 'Falha ao atualizar aluno.');
+        }
+      } else { // Criar
+        // ESTE BLOCO REQUER UM ENDPOINT NO BACKEND QUE PERMITA ADMIN CRIAR ALUNO
+        // O endpoint /usuarios (createUsuarioByAdmin) não suporta tipo 'ALUNO'.
+        // Se você tiver um endpoint como /auth/register que um admin possa usar com privilégios, ou um novo endpoint.
+        setError("Funcionalidade de criar novo aluno pelo painel admin não implementada no backend ou requer endpoint específico.");
+        console.warn("Tentativa de criar aluno via admin: backend não suporta 'ALUNO' em createUsuarioByAdmin. Payload:", alunoPayload);
+        // Exemplo de como seria se o backend suportasse:
+        // const response = await axios.post(`${API_URL_BASE}/usuarios/admin/criar-aluno`, alunoPayload, { headers });
+        // if (response.data.success && response.data.id_usuario) {
+        //   const novoAluno = { ...data, id_usuario: response.data.id_usuario, tipo: 'ALUNO' } as (Usuario & { matricula?: string });
+        //   setAlunosData(prev => [...prev, novoAluno]);
+        //   closeAlunoModal();
+        // } else {
+        //   throw new Error(response.data.message || 'Falha ao criar aluno.');
+        // }
+        return; // Retorna pois a funcionalidade não está completa sem backend
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao salvar aluno.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar aluno.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao salvar aluno:", error);
+      setError(errorMessage);
+    }
   };
 
   // --- Delete Handlers (called by modals or by AdminList's onDeleteItem) ---
-  const handleDeleteCursoById = (idCurso: number) => {
-    setCursosData(prevCursos => prevCursos.filter(c => c.id_curso !== idCurso));
-    closeCursoModal();
+  const handleDeleteCursoById = async (idCurso: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) { setError("Autenticação necessária para deletar."); return; }
+
+    try {
+      const response = await axios.delete(`${API_URL_BASE}/cursos/${idCurso}`, { headers });
+      if (response.data.success) {
+        setCursosData(prevCursos => prevCursos.filter(c => c.id_curso !== idCurso));
+        closeCursoModal(); // Fechar se estiver aberto
+      } else {
+        throw new Error(response.data.message || 'Falha ao deletar curso.');
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao deletar curso.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao deletar curso.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao deletar curso:", error);
+      setError(errorMessage);
+    }
   };
 
-  const handleDeleteProfessorById = (idUsuario: number) => {
-    setProfessoresData(prevProfessores => prevProfessores.filter(p => p.id_usuario !== idUsuario));
-    closeProfessorModal();
+  const handleDeleteProfessorById = async (idUsuario: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) { setError("Autenticação necessária para deletar."); return; }
+
+    try {
+      // O backend usa soft delete (ativo = FALSE) para /usuarios/:id
+      const response = await axios.delete(`${API_URL_BASE}/usuarios/${idUsuario}`, { headers });
+      if (response.data.success) {
+        // Se for soft delete, você pode querer refetch ou atualizar o estado 'ativo'
+        setProfessoresData(prevProfessores => prevProfessores.filter(p => p.id_usuario !== idUsuario)); // Ou atualizar 'ativo'
+        closeProfessorModal();
+      } else {
+        throw new Error(response.data.message || 'Falha ao deletar professor.');
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao deletar professor.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao deletar professor.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao deletar professor:", error);
+      setError(errorMessage);
+    }
   };
 
-  const handleDeleteAlunoById = (idUsuario: number) => {
-    setAlunosData(prevAlunos => prevAlunos.filter(a => a.id_usuario !== idUsuario));
-    closeAlunoModal();
+  const handleDeleteAlunoById = async (idUsuario: number) => {
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    if (!token) { setError("Autenticação necessária para deletar."); return; }
+
+    try {
+      const response = await axios.delete(`${API_URL_BASE}/usuarios/${idUsuario}`, { headers });
+      if (response.data.success) {
+        setAlunosData(prevAlunos => prevAlunos.filter(a => a.id_usuario !== idUsuario)); // Ou atualizar 'ativo'
+        closeAlunoModal();
+      } else {
+        throw new Error(response.data.message || 'Falha ao deletar aluno.');
+      }
+    } catch (error: unknown) {
+      let errorMessage = "Erro ao deletar aluno.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao deletar aluno.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao deletar aluno:", error);
+      setError(errorMessage);
+    }
   };
 
   const viewConfigs: Record<AdminView, ViewConfig> = {
@@ -238,7 +437,7 @@ export const AdminArea = () => {
             <>
               <strong>{curso.titulo}</strong>
               <span style={{ fontSize: '0.85em', color: '#aaa', display: 'block' }}>
-                Professor ID: {curso.id_professor} | Carga Horária: {curso.carga_horaria}h | Módulos: {curso.modulos}
+                Professor ID: {curso.id_professor} | Carga Horária: {curso.carga_horaria}h | Módulos: {curso.modulos?.length || 0}
               </span>
             </>
           );
@@ -338,22 +537,26 @@ export const AdminArea = () => {
             />
           </div>
           <div className={styles.admin_list_scrollable_content}>
-            {/* O componente AdminList já foi fornecido em uma interação anterior e é usado aqui */}
-            {/* Supondo que AdminList esteja corretamente importado e funcional */}
-            {filteredData.length > 0 || searchTerm ? (
-              <AdminList
-                items={filteredData}
-                renderItemContent={renderItemContent}
-                addItemLabel={currentConfig.addItemLabel}
-                onAddItem={currentConfig.onAddNewItem}
-                itemKeyExtractor={getItemKey}
-                onEditItem={handleEditItem}
-                onDeleteItem={handleDeleteItemFromList}
-              />
-            ) : (
-              <p style={{ color: '#ccc', textAlign: 'center', paddingTop: '20px' }}>
-                Nenhum item para exibir. <button onClick={currentConfig.onAddNewItem} className={styles.inline_add_link_button}>Adicionar novo?</button>
-              </p>
+            {isLoading && <p style={{ textAlign: 'center', padding: '20px' }}>Carregando dados...</p>}
+            {error && <p style={{ color: 'red', textAlign: 'center', padding: '20px' }}>Erro ao carregar dados: {error}</p>}
+            {!isLoading && !error && (
+              <>
+                {filteredData.length > 0 || searchTerm ? (
+                  <AdminList
+                    items={filteredData}
+                    renderItemContent={renderItemContent}
+                    addItemLabel={currentConfig.addItemLabel}
+                    onAddItem={currentConfig.onAddNewItem}
+                    itemKeyExtractor={getItemKey}
+                    onEditItem={handleEditItem}
+                    onDeleteItem={handleDeleteItemFromList}
+                  />
+                ) : (
+                  <p style={{ color: '#ccc', textAlign: 'center', paddingTop: '20px' }}>
+                    Nenhum item para exibir. <button onClick={currentConfig.onAddNewItem} className={styles.inline_add_link_button}>Adicionar novo?</button>
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

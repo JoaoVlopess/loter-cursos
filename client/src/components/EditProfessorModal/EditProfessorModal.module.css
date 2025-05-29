@@ -44,6 +44,8 @@
 .formGroup input[type="number"],
 .formGroup input[type="email"],
 .formGroup input[type="url"],
+.formGroup input[type="password"], /* Estiliza o campo de senha */
+.formGroup input[type="date"],     /* Estiliza o campo de data */
 .formGroup textarea,
 .formGroup select {
   width: 100%;

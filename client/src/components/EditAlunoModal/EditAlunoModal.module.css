@@ -42,6 +42,8 @@
 
 .formGroup input[type="text"],
 .formGroup input[type="number"],
+.formGroup input[type="password"], /* Estiliza o campo de senha */
+.formGroup input[type="date"],     /* Estiliza o campo de data */
 .formGroup input[type="email"], /* Adicionado para o campo de email */
 .formGroup input[type="url"],
 .formGroup textarea,

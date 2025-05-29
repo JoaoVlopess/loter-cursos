@@ -5,7 +5,9 @@ import styles from './EditProfessorModal.module.css';
 type ProfessorFormData = {
   nome: string;
   email: string;
-  especialidade?: string;
+  especialidade?: string;  
+  data_nascimento?: string; // Formato YYYY-MM-DD
+  senha?: string; // Apenas para criação
   ativo: boolean;
 };
 
@@ -13,7 +15,8 @@ type ProfessorFormData = {
 interface EditProfessorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  professor: (Usuario & { especialidade?: string }) | null; // Usar tipo combinado aqui
+  // Professor pode ter cpf e data_nascimento vindos do tipo Usuario
+  professor: (Usuario & { especialidade?: string; data_nascimento?: string; }) | null;
   onSave: (updatedData: ProfessorFormData, professorId?: number) => void;
   onDelete?: (idUsuario: number) => void;
 }
@@ -22,6 +25,8 @@ export const EditProfessorModal: React.FC<EditProfessorModalProps> = ({ isOpen, 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [especialidade, setEspecialidade] = useState('');
+  const [dataNascimento, setDataNascimento] = useState('');
+  const [senha, setSenha] = useState('');
   const [ativo, setAtivo] = useState(true);
 
   useEffect(() => {
@@ -29,11 +34,16 @@ export const EditProfessorModal: React.FC<EditProfessorModalProps> = ({ isOpen, 
       setNome(professor.nome);
       setEmail(professor.email);
       setEspecialidade(professor.especialidade || '');
+      setDataNascimento(professor.data_nascimento || '');
+      setSenha(''); // Senha não é preenchida na edição
       setAtivo(professor.ativo);
     } else {
+      // Reset para Adicionar Novo
       setNome('');
       setEmail('');
       setEspecialidade('');
+      setDataNascimento('');
+      setSenha('');
       setAtivo(true);
     }
   }, [professor, isOpen]);
@@ -52,8 +62,18 @@ export const EditProfessorModal: React.FC<EditProfessorModalProps> = ({ isOpen, 
       alert("Formato de email inválido.");
       return;
     }
+    // Validações para CPF e Data de Nascimento podem ser adicionadas aqui se necessário
+
+    if (!professor && !senha) { // Senha obrigatória apenas para novo professor
+        alert("Senha é obrigatória para novos professores.");
+        return;
+    }
+
     onSave(
-      { nome, email, especialidade: especialidade || undefined, ativo },
+      { nome, email, especialidade: especialidade || undefined, ativo,
+        data_nascimento: dataNascimento || undefined,
+        senha: senha || undefined, // Enviar senha apenas se preenchida (para criação)
+      },
       professor?.id_usuario
     );
   };
@@ -71,7 +91,9 @@ export const EditProfessorModal: React.FC<EditProfessorModalProps> = ({ isOpen, 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}><label htmlFor="prof-nome">Nome:</label><input type="text" id="prof-nome" value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
           <div className={styles.formGroup}><label htmlFor="prof-email">Email:</label><input type="email" id="prof-email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          {!professor && <div className={styles.formGroup}><label htmlFor="prof-senha">Senha:</label><input type="password" id="prof-senha" value={senha} onChange={(e) => setSenha(e.target.value)} required={!professor} /></div>}
           <div className={styles.formGroup}><label htmlFor="prof-especialidade">Especialidade:</label><input type="text" id="prof-especialidade" value={especialidade} onChange={(e) => setEspecialidade(e.target.value)} /></div>
+          <div className={styles.formGroup}><label htmlFor="prof-dataNascimento">Data de Nascimento:</label><input type="date" id="prof-dataNascimento" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} /></div>
           <div className={styles.formGroup}>
             <label htmlFor="prof-ativo">Ativo:</label>
             <select id="prof-ativo" value={ativo ? 'true' : 'false'} onChange={(e) => setAtivo(e.target.value === 'true')}>
