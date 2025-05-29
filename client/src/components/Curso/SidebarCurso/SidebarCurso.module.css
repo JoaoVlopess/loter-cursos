@@ -65,6 +65,11 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.aulaLink.activeAula { /* Estilo para a aula ativa */
+  background-color: rgba(255, 255, 255, 0.15);
+  font-weight: bold;
+}
+
 .playIcon {
   font-size: 0.9rem;
   min-width: 1rem; /* Largura fixa */

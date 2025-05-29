@@ -35,14 +35,17 @@ export const LoginForm = () => {
         senha,
       });
 
-      if (response.data.success && response.data.token && response.data.user && response.data.user.tipo) {
+      // Log the full response data to inspect its structure
+      console.log('Server response data:', response.data);
+
+      if (response.data.success && response.data.token && response.data.usuario && response.data.usuario.tipo) {
         localStorage.setItem('authToken', response.data.token);
 
-        localStorage.setItem('userData', JSON.stringify(response.data.user));
+        localStorage.setItem('userData', JSON.stringify(response.data.usuario));
 
 
         setIsLoading(false);
-        const userType = response.data.user.tipo;
+        const userType = response.data.usuario.tipo;
 
         // Redireciona com base no tipo de usuário
         switch (userType) {
@@ -115,5 +118,3 @@ export const LoginForm = () => {
     </form>
   );
 };
-
-
