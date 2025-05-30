@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom'; // Para obter o ID do curso da URL
+import axios, { AxiosError } from 'axios'; // Para chamadas API
 import styles from '../ProfessorEditPage/ProfessorEditPage.module.css';
 import type { Modulo } from '../../types/Curso/modulo';
 import type { Aula } from '../../types/Curso/aula'; // Importar Aula
@@ -7,6 +9,11 @@ import { ModulosList } from '../../components/ModulosList/ModulosList';
 import { EditModuloModal } from '../../components/EditModuloModal/EditModuloModal';
 import { EditAulaModal } from '../../components/EditAulaModal/EditAulaModal'; // Importar o modal de aula
 
+interface ApiErrorData {
+  message: string;
+  success?: boolean;
+  // Adicione outros campos que sua API pode retornar em caso de erro
+}
 
 export const ProfessorEditPage = () => {
   // Dados de exemplo iniciais
@@ -76,11 +83,21 @@ export const ProfessorEditPage = () => {
     }
   ];
 
+  const { cursoId: cursoIdFromParams } = useParams<{ cursoId: string }>(); // Obter cursoId da URL
   const [modulos, setModulos] = useState<Modulo[]>(initialModulos);
   const [isModuloModalOpen, setIsModuloModalOpen] = useState(false);
   const [editingModulo, setEditingModulo] = useState<Modulo | null>(null);
   const [nextModuloOrdem, setNextModuloOrdem] = useState<number>(1);
 
+  // Estados para API
+  const [isLoading, setIsLoading] = useState(false); // Para operações de save
+  const [error, setError] = useState<string | null>(null);
+  const API_URL_BASE = 'http://localhost:3000'; // Mova para uma constante ou config
+
+  // TODO: No futuro, buscar os módulos e aulas da API com base no cursoIdFromParams
+  // useEffect(() => {
+  //   // fetchModulosEaulas(cursoIdFromParams);
+  // }, [cursoIdFromParams]);
 
   // Estados para o modal de Aula
   const [isAulaModalOpen, setIsAulaModalOpen] = useState(false);
@@ -105,25 +122,59 @@ export const ProfessorEditPage = () => {
     setIsModuloModalOpen(true);
   };
 
-  const handleSaveModulo = (updatedData: { titulo: string; ordem: number; descricao: string }) => {
-    if (editingModulo) { // Modo Edição
-      setModulos(prevModulos =>
-        prevModulos.map(mod =>
-          mod.id_modulo === editingModulo.id_modulo
-            ? { ...mod, ...updatedData }
-            : mod
-        ).sort((a, b) => a.ordem - b.ordem) // Reordena após edição
-      );
-    } else { // Modo Adição
-      const newModulo: Modulo = {
-        id_modulo: Date.now(), // ID temporário. Em produção, viria do backend.
-        id_curso: initialModulos.length > 0 ? initialModulos[0].id_curso : 0, // Usar um id_curso de exemplo ou de contexto
-        ...updatedData,
-        aulas: [], // Novo módulo começa sem aulas
-      };
-      setModulos(prevModulos => [...prevModulos, newModulo].sort((a, b) => a.ordem - b.ordem));
+  const handleSaveModulo = async (moduloData: { titulo: string; ordem: number; descricao: string }) => {
+    setIsLoading(true);
+    setError(null);
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    if (!cursoIdFromParams) {
+      setError("ID do curso não encontrado para adicionar o módulo.");
+      setIsLoading(false);
+      return;
     }
-    handleCloseModuloModal();
+
+    try {
+      if (editingModulo) { // Modo Edição
+        // TODO: Implementar chamada PUT para /modulos/:moduloId
+        const response = await axios.put(`${API_URL_BASE}/modulos/${editingModulo.id_modulo}`, moduloData, { headers });
+        if (response.data.success) {
+          setModulos(prevModulos =>
+            prevModulos.map(mod =>
+              mod.id_modulo === editingModulo.id_modulo
+                ? { ...mod, ...moduloData } // Assumindo que a API não retorna o objeto atualizado
+                : mod
+            ).sort((a, b) => a.ordem - b.ordem)
+          );
+        } else {
+          throw new Error(response.data.message || "Falha ao atualizar módulo.");
+        }
+      } else { // Modo Adição
+        const response = await axios.post<{ success: boolean, data: Modulo, message: string }>(
+          `${API_URL_BASE}/cursos/${cursoIdFromParams}/modulos`,
+          moduloData,
+          { headers }
+        );
+        if (response.data.success && response.data.data) {
+          setModulos(prevModulos => [...prevModulos, response.data.data].sort((a, b) => a.ordem - b.ordem));
+        } else {
+          throw new Error(response.data.message || "Falha ao criar módulo.");
+        }
+      }
+      handleCloseModuloModal();
+    } catch (error: unknown) {
+      let errorMessage = "Erro desconhecido ao salvar módulo.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar módulo.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao salvar módulo:", error);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteModulo = (idModuloToDelete: number) => {
@@ -160,35 +211,66 @@ export const ProfessorEditPage = () => {
     setCurrentModuloIdForAula(null);
   };
 
-  const handleSaveAula = (aulaData: Omit<Aula, 'id_aula' | 'id_modulo'>, aulaIdToUpdate?: number) => {
+  const handleSaveAula = async (aulaData: Omit<Aula, 'id_aula' | 'id_modulo'>, aulaIdToUpdate?: number) => {
     if (currentModuloIdForAula === null) return;
+    setIsLoading(true);
+    setError(null);
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    setModulos(prevModulos =>
-      prevModulos.map(mod => {
-        if (mod.id_modulo === currentModuloIdForAula) {
-          let newAulasArray: Aula[];
-          if (aulaIdToUpdate) { // Editando aula existente
-            newAulasArray = (mod.aulas || []).map(aula =>
-              aula.id_aula === aulaIdToUpdate
-                ? { ...aula, ...aulaData } // Mantém id_aula e id_modulo originais
-                : aula
-            );
-          } else { // Adicionando nova aula
-            const newAula: Aula = {
-              ...aulaData,
-              id_aula: Date.now(), // Gerar um ID simples para o exemplo.
-              id_modulo: currentModuloIdForAula,
-            };
-            newAulasArray = [...(mod.aulas || []), newAula];
-          }
-          // Garante que as aulas sejam ordenadas após adição/edição
-          newAulasArray.sort((a, b) => a.ordem - b.ordem);
-          return { ...mod, aulas: newAulasArray };
+    try {
+      if (aulaIdToUpdate) { // Editando aula existente
+        // TODO: Implementar chamada PUT para /aulas/:aulaId
+        const response = await axios.put(`${API_URL_BASE}/aulas/${aulaIdToUpdate}`, aulaData, { headers });
+        if (response.data.success) {
+          setModulos(prevModulos =>
+            prevModulos.map(mod => {
+              if (mod.id_modulo === currentModuloIdForAula) {
+                const newAulasArray = (mod.aulas || []).map(aula =>
+                  aula.id_aula === aulaIdToUpdate ? { ...aula, ...aulaData } : aula
+                ).sort((a, b) => a.ordem - b.ordem);
+                return { ...mod, aulas: newAulasArray };
+              }
+              return mod;
+            })
+          );
+        } else {
+          throw new Error(response.data.message || "Falha ao atualizar aula.");
         }
-        return mod;
-      })
-    );
-    handleCloseAulaModal();
+      } else { // Adicionando nova aula
+        const response = await axios.post<{ success: boolean, data: Aula, message: string }>(
+          `${API_URL_BASE}/modulos/${currentModuloIdForAula}/aulas`,
+          aulaData,
+          { headers }
+        );
+        if (response.data.success && response.data.data) {
+          setModulos(prevModulos =>
+            prevModulos.map(mod => {
+              if (mod.id_modulo === currentModuloIdForAula) {
+                const newAulasArray = [...(mod.aulas || []), response.data.data].sort((a, b) => a.ordem - b.ordem);
+                return { ...mod, aulas: newAulasArray };
+              }
+              return mod;
+            })
+          );
+        } else {
+          throw new Error(response.data.message || "Falha ao criar aula.");
+        }
+          }
+      handleCloseAulaModal();
+    } catch (error: unknown) {
+      let errorMessage = "Erro desconhecido ao salvar aula.";
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<ApiErrorData>;
+        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar aula.";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("Erro ao salvar aula:", error);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteAula = (idAulaToDelete: number, idModuloDaAula: number) => {
@@ -207,12 +289,15 @@ export const ProfessorEditPage = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>Gerenciamento Curso X</h1>
+      {/* Idealmente, o título do curso viria da API */}
+      <h1 className={styles.pageTitle}>Gerenciamento do Curso (ID: {cursoIdFromParams || 'Carregando...'})</h1>
       <div className={styles.header}>
         <FormButton onClick={handleOpenAddModuloModal}>
           + Adicionar Módulo
         </FormButton>
       </div>
+      {isLoading && <p className={styles.loadingMessage}>Salvando...</p>}
+      {error && <p className={styles.errorMessage}>Erro: {error}</p>}
       {/* A linha que você destacou, agora com as novas props: */}
       <ModulosList
         modulos={modulos}
