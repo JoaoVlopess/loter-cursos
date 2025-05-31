@@ -30,7 +30,7 @@ export const AdminCard = ({ curso }: Props) => {
           </div>
           <div className={styles.info_1_text_item}>
             <FaBook />
-            <p>{curso.modulos} Módulos</p>
+            <p>{curso.modulos?.length} Módulos</p>
           </div>
 
         </div>

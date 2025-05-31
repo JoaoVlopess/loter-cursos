@@ -8,6 +8,8 @@ import { FormButton } from '../../components/FormButton/FormButton';
 import { ModulosList } from '../../components/ModulosList/ModulosList';
 import { EditModuloModal } from '../../components/EditModuloModal/EditModuloModal';
 import { EditAulaModal } from '../../components/EditAulaModal/EditAulaModal'; // Importar o modal de aula
+import type { Curso } from '../../types/Curso/curso'; // Para o tipo de retorno da API de detalhes do curso
+
 
 interface ApiErrorData {
   message: string;
@@ -16,75 +18,11 @@ interface ApiErrorData {
 }
 
 export const ProfessorEditPage = () => {
-  // Dados de exemplo iniciais
-  const initialModulos: Modulo[] = [
-    {
-      id_modulo: 1,
-      id_curso: 101,
-      titulo: "Introdução ao Backend",
-      ordem: 1,
-      descricao: "Entenda os fundamentos do backend e como funciona a comunicação cliente-servidor.",
-      aulas: [
-        {
-          id_aula: 1,
-          id_modulo: 1,
-          titulo: "O que é backend?",
-          ordem: 1,
-          conteudo: "Conceitos básicos sobre o que é backend e seu papel no desenvolvimento web.",
-          duracao: 17,
-          descricao: "Uma breve introdução ao conceito de backend."
-        },
-        {
-          id_aula: 2,
-          id_modulo: 1,
-          titulo: "O que é cliente e servidor?",
-          ordem: 2,
-          conteudo: "Diferença entre cliente e servidor, como se comunicam e exemplos práticos.",
-          duracao: 27,
-          descricao: "Explorando a arquitetura cliente-servidor."
-        },
-        {
-          id_aula: 3,
-          id_modulo: 1,
-          titulo: "Entendendo o protocolo HTTP 1",
-          ordem: 3,
-          conteudo: "Visão geral do HTTP 1, cabeçalhos, métodos e exemplo s de requisições.",
-          duracao: 25,
-          descricao: "Detalhes sobre o funcionamento do HTTP."
-        },
-      ]
-    },
-    {
-      id_modulo: 2,
-      id_curso: 101,
-      titulo: "Introdução ao Node.js",
-      ordem: 2,
-      descricao: "Aprenda sobre o ambiente Node.js e como criar suas primeiras aplicações.",
-      aulas: [
-        {
-          id_aula: 4,
-          id_modulo: 2,
-          titulo: "O que é Node.js?",
-          ordem: 1,
-          conteudo: "Definição, propósito e vantagens do uso do Node.js.",
-          duracao: 12,
-          descricao: "Visão geral do Node.js."
-        },
-        {
-          id_aula: 5,
-          id_modulo: 2,
-          titulo: "Configurando o ambiente",
-          ordem: 2,
-          conteudo: "Como instalar o Node.js, npm e configurar o VSCode.",
-          duracao: 19,
-          descricao: "Passos para preparar seu ambiente de desenvolvimento Node.js."
-        }
-      ]
-    }
-  ];
+
 
   const { cursoId: cursoIdFromParams } = useParams<{ cursoId: string }>(); // Obter cursoId da URL
-  const [modulos, setModulos] = useState<Modulo[]>(initialModulos);
+  const [modulos, setModulos] = useState<Modulo[]>([]);
+  const [cursoTitulo, setCursoTitulo] = useState<string>(''); // Para exibir o título do curso
   const [isModuloModalOpen, setIsModuloModalOpen] = useState(false);
   const [editingModulo, setEditingModulo] = useState<Modulo | null>(null);
   const [nextModuloOrdem, setNextModuloOrdem] = useState<number>(1);
@@ -92,12 +30,51 @@ export const ProfessorEditPage = () => {
   // Estados para API
   const [isLoading, setIsLoading] = useState(false); // Para operações de save
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingPage, setIsLoadingPage] = useState(true); // Para o carregamento inicial da página
   const API_URL_BASE = 'http://localhost:3000'; // Mova para uma constante ou config
 
-  // TODO: No futuro, buscar os módulos e aulas da API com base no cursoIdFromParams
-  // useEffect(() => {
-  //   // fetchModulosEaulas(cursoIdFromParams);
-  // }, [cursoIdFromParams]);
+  useEffect(() => {
+    const fetchCursoDetails = async () => {
+      if (!cursoIdFromParams) {
+        console.warn("[ProfessorEditPage] ID do curso não disponível (cursoIdFromParams é falsy). Verifique a configuração da rota para :cursoId.");
+        setIsLoadingPage(false);
+        return;
+      }
+      setIsLoadingPage(true);
+      setError(null); // Limpa erros anteriores antes de uma nova busca
+      setModulos([]);   // Limpa módulos anteriores
+      setCursoTitulo('');
+      try {
+        const response = await axios.get<{ success: boolean, data: Curso }>(
+
+          `${API_URL_BASE}/cursos/${cursoIdFromParams}/detalhes`
+        );
+        if (response.data.success && response.data.data) {
+          setModulos([]); // Limpa módulos se o ID não estiver presente
+          setCursoTitulo(''); // Limpa título do curso
+        } else {
+          const apiErrorMessage = (response.data as unknown as ApiErrorData).message || "Falha ao buscar detalhes do curso (API retornou erro).";
+          console.error("[ProfessorEditPage] Erro da API ao buscar detalhes:", apiErrorMessage, "Resposta completa:", response.data);
+          setError(apiErrorMessage);
+        }
+      } catch (error: unknown) {
+        let errorMessage = "Erro desconhecido ao buscar detalhes do curso.";
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as AxiosError<ApiErrorData>;
+          errorMessage = axiosError.response?.data?.message || axiosError.message;
+          console.error("[ProfessorEditPage] Erro Axios:", errorMessage, "Detalhes:", axiosError.response);
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+          console.error("[ProfessorEditPage] Erro Genérico:", errorMessage, "Objeto do erro:", error);
+        }
+        setError(errorMessage);
+      } finally {
+        setIsLoadingPage(false);
+      }
+    };
+    fetchCursoDetails();
+  }, [cursoIdFromParams, API_URL_BASE]); // Adicionado API_URL_BASE por completude, embora seja constante.
+
 
   // Estados para o modal de Aula
   const [isAulaModalOpen, setIsAulaModalOpen] = useState(false);
@@ -150,15 +127,21 @@ export const ProfessorEditPage = () => {
           throw new Error(response.data.message || "Falha ao atualizar módulo.");
         }
       } else { // Modo Adição
-        const response = await axios.post<{ success: boolean, data: Modulo, message: string }>(
+        const response = await axios.post<{ success: boolean, id_modulo: number, message: string }>(
           `${API_URL_BASE}/cursos/${cursoIdFromParams}/modulos`,
           moduloData,
           { headers }
         );
-        if (response.data.success && response.data.data) {
-          setModulos(prevModulos => [...prevModulos, response.data.data].sort((a, b) => a.ordem - b.ordem));
+        if (response.data.success && response.data.id_modulo) {
+          const novoModulo: Modulo = {
+            ...moduloData, // Spread the data sent to the API
+            id_modulo: response.data.id_modulo,
+            id_curso: parseInt(cursoIdFromParams, 10),
+            aulas: [] // New module starts with no aulas
+          };
+          setModulos(prevModulos => [...prevModulos, novoModulo].sort((a, b) => a.ordem - b.ordem));
         } else {
-          throw new Error(response.data.message || "Falha ao criar módulo.");
+          throw new Error((response.data as unknown as ApiErrorData).message || "Falha ao criar módulo.");
         }
       }
       handleCloseModuloModal();
@@ -238,25 +221,29 @@ export const ProfessorEditPage = () => {
           throw new Error(response.data.message || "Falha ao atualizar aula.");
         }
       } else { // Adicionando nova aula
-        const response = await axios.post<{ success: boolean, data: Aula, message: string }>(
+        const response = await axios.post<{ success: boolean, id_aula: number, message: string }>(
           `${API_URL_BASE}/modulos/${currentModuloIdForAula}/aulas`,
           aulaData,
           { headers }
         );
-        if (response.data.success && response.data.data) {
+        if (response.data.success && response.data.id_aula) {
           setModulos(prevModulos =>
             prevModulos.map(mod => {
               if (mod.id_modulo === currentModuloIdForAula) {
-                const newAulasArray = [...(mod.aulas || []), response.data.data].sort((a, b) => a.ordem - b.ordem);
-                return { ...mod, aulas: newAulasArray };
+                const novaAula: Aula = {
+                  ...aulaData,
+                  id_aula: response.data.id_aula,
+                  id_modulo: currentModuloIdForAula
+                };
+                const newAulasArray = [...(mod.aulas || []), novaAula].sort((a, b) => a.ordem - b.ordem); return { ...mod, aulas: newAulasArray };
               }
               return mod;
             })
           );
         } else {
-          throw new Error(response.data.message || "Falha ao criar aula.");
+          throw new Error((response.data as unknown as ApiErrorData).message || "Falha ao criar aula.");
         }
-          }
+      }
       handleCloseAulaModal();
     } catch (error: unknown) {
       let errorMessage = "Erro desconhecido ao salvar aula.";
@@ -290,14 +277,22 @@ export const ProfessorEditPage = () => {
   return (
     <div className={styles.container}>
       {/* Idealmente, o título do curso viria da API */}
-      <h1 className={styles.pageTitle}>Gerenciamento do Curso (ID: {cursoIdFromParams || 'Carregando...'})</h1>
+      <h1 className={styles.pageTitle}>
+        Gerenciamento do Curso: {isLoadingPage ? 'Carregando...' : (cursoTitulo || `ID ${cursoIdFromParams}`)}
+      </h1>
+
       <div className={styles.header}>
         <FormButton onClick={handleOpenAddModuloModal}>
           + Adicionar Módulo
         </FormButton>
       </div>
-      {isLoading && <p className={styles.loadingMessage}>Salvando...</p>}
-      {error && <p className={styles.errorMessage}>Erro: {error}</p>}
+      {isLoading && <p className={styles.loadingMessage}>Salvando alterações...</p>}
+      {error && !isLoadingPage && <p className={styles.errorMessage}>Erro: {error}</p>}
+
+      {isLoadingPage && <p className={styles.loadingMessage}>Carregando dados do curso...</p>}
+      {!isLoadingPage && !error && modulos.length === 0 && (
+        <p>Nenhum módulo encontrado para este curso. Comece adicionando um!</p>
+      )}
       {/* A linha que você destacou, agora com as novas props: */}
       <ModulosList
         modulos={modulos}
