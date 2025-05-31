@@ -6,68 +6,65 @@ import { NavBar } from "../../components/NavBar/Navbar";
 import { ProfessorCard } from "../../components/Professor/ProfessorCard/ProfessorCard";
 import type { Curso } from "../../types/Curso/curso";
 import type { Usuario } from "../../types/Clientes/usuario"; // For userData type
+import { useAuth } from "../../context/AuthContext";         // <--- USE AUTH
+import { fetchMeusCursos } from "../../services/professorService"; // <--- USE SERVICE
 
 import styles from "../ProfArea/ProfArea.module.css";
 
-// Define a more specific type for userData expected from localStorage for a professor
-type ProfessorUserData = Usuario & {
-  id_professor?: number; // This is the key field we need
-};
-
-// Interface for expected API error data structure
-interface ApiErrorData {
-  message: string;
-  success?: boolean;
-};
-
 export const ProfArea = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Pode ser gerenciado pelo isLoading do useAuth para a verificação inicial
   const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth(); // Pega o usuário e status de autenticação
 
   useEffect(() => {
-    const fetchCursosDoProfessor = async () => {
-      setIsLoading(true);
+    const carregarCursos = async () => {
+      if (!isAuthenticated || !user || user.tipo !== 'PROFESSOR') {
+        setError("Acesso negado. Esta área é apenas para professores.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true); // Loading para a busca dos cursos
       setError(null);
       try {
-        const userDataString = localStorage.getItem('userData');
-        if (!userDataString) {
-          throw new Error("Dados do usuário não encontrados. Faça o login.");
-        }
-
-        const userData: ProfessorUserData = JSON.parse(userDataString);
-
-        if (userData.tipo !== 'PROFESSOR' || !userData.id_professor) {
-          throw new Error("Usuário não é um professor ou ID do professor não encontrado.");
-        }
-
-        const API_URL_BASE = 'http://localhost:3000';
-        const response = await axios.get<{ success: boolean, data: Curso[] }>(
-          `${API_URL_BASE}/professores/${userData.id_professor}/cursos`
-        );
-
-        if (response.data && response.data.success) {
-          setCursos(response.data.data);
-        } else {
-          throw new Error( "Falha ao buscar cursos do professor.");
-        }
-      } catch (error: unknown) {
-        let errorMessage = "Não foi possível carregar os cursos. Tente novamente mais tarde.";
-        if (axios.isAxiosError(error)) {
-          const axiosError = error as AxiosError<ApiErrorData>;
-          errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao buscar cursos.";
-        } else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-        console.error("Erro ao buscar cursos do professor:", error);
-        setError(errorMessage);
+        // A rota /professores/meus-cursos no backend usa o token para identificar o professor
+        const cursosData = await fetchMeusCursos();
+        setCursos(cursosData);
+      } catch (err: any) {
+        console.error("Erro ao buscar cursos do professor em ProfArea:", err);
+        setError(err.message || "Não foi possível carregar os cursos.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCursosDoProfessor();
-  }, []);
+    // Só busca os cursos se a autenticação não estiver carregando E o usuário estiver autenticado
+    if (!authIsLoading) {
+      if (isAuthenticated && user?.tipo === 'PROFESSOR') {
+        carregarCursos();
+      } else if (isAuthenticated && user?.tipo !== 'PROFESSOR') {
+        setError("Acesso negado. Esta área é apenas para professores.");
+        setIsLoading(false);
+      } else { // Não autenticado
+         setError("Você precisa estar logado como professor para ver esta página.");
+         setIsLoading(false);
+      }
+    }
+  }, [user, isAuthenticated, authIsLoading]);
+
+  // Se a autenticação ainda está carregando, mostre um loader
+  if (authIsLoading) {
+    return <div>Verificando autenticação...</div>;
+  }
+
+  // Se não estiver autenticado ou não for professor (APÓS authIsLoading ser false)
+  // e não houver erro já setado que indique isso.
+  if (!isAuthenticated || (user && user.tipo !== 'PROFESSOR' && !error) ) {
+     // O ProtectedRoute já deve ter redirecionado, mas como uma segunda barreira
+     // ou se esta página for acessada de forma inesperada.
+    return <div>Acesso negado ou você não está logado como professor.</div>;
+  }
 
   return (
     <div className={styles.profArea_page}>

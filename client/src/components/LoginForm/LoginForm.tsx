@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import styles from '../LoginForm/LoginForm.module.css';
+import styles from './LoginForm.module.css';
 import { InputField } from '../InputField/InputField';
 import { FormButton } from '../FormButton/FormButton';
+import { useAuth } from '../../context/AuthContext';
+import { realizarLogin } from '../../services/authService';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export const LoginForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { loginContext } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,61 +25,39 @@ export const LoginForm = () => {
       return;
     }
 
-
-
+    // =================================================
+    // == CONSOLE.LOG ADICIONADO AQUI PARA VER OS DADOS ==
+    // =================================================
+    console.log('Tentando fazer login com:', { email, senha });
+    // =================================================
 
     try {
-      const API_URL_BASE = 'http://localhost:3000';
-      const ENDPOINT_LOGIN = '/login';
+      const loginData = await realizarLogin(email, senha);
 
-      const response = await axios.post(`${API_URL_BASE}${ENDPOINT_LOGIN}`, {
-        email,
-        senha,
-      });
+      loginContext(loginData.token, loginData.usuario);
 
-      // Log the full response data to inspect its structure
-      console.log('Server response data:', response.data);
-
-      if (response.data.success && response.data.token && response.data.usuario && response.data.usuario.tipo) {
-        localStorage.setItem('authToken', response.data.token);
-
-        localStorage.setItem('userData', JSON.stringify(response.data.usuario));
-
-
-        setIsLoading(false);
-        const userType = response.data.usuario.tipo;
-
-        // Redireciona com base no tipo de usuário
-        switch (userType) {
-          case 'ADMIN':
-            navigate('/admin'); // Rota para a área administrativa
-            break;
-          case 'PROFESSOR':
-            navigate('/professor'); // Rota para a área do professor
-            break;
-          case 'ALUNO':
-            navigate('/home'); // Rota para a área do aluno/plataforma
-            break;
-          default:
-            // Fallback para um tipo desconhecido ou se /home for uma página geral pós-login
-            console.warn(`Tipo de usuário desconhecido: ${userType}. Redirecionando para /home.`);
-            navigate('/home');
-            break;
-        }
-      } else {
-        // Caso a resposta não seja o esperado, mesmo com status 200
-        setError(response.data.message || 'Falha no login. Verifique suas credenciais.');
-        setIsLoading(false);
+      const userType = loginData.usuario.tipo;
+      switch (userType) {
+        case 'ADMIN':
+          navigate('/admin');
+          break;
+        case 'PROFESSOR':
+          navigate('/professor');
+          break;
+        case 'ALUNO':
+          navigate('/home');
+          break;
+        default:
+          console.warn(`Tipo de usuário desconhecido: ${userType}. Redirecionando para /home.`);
+          navigate('/home');
+          break;
       }
-    } catch (err: unknown) {
+
+    } catch (err: any) {
+      setError(err.message || 'Erro ao tentar fazer login. Tente novamente.');
+      console.error('Erro no handleSubmit (login):', err);
+    } finally {
       setIsLoading(false);
-      if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.message || 'Erro ao tentar fazer login. Tente novamente.');
-        console.error('Erro na resposta do servidor (login):', err.response.data);
-      } else {
-        setError('Erro de conexão ou ao processar a requisição de login.');
-        console.error('Erro no handleSubmit (login):', err);
-      }
     }
   };
 
@@ -92,6 +72,8 @@ export const LoginForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           name="email"
+          disabled={isLoading}
+          required
         />
       </div>
 
@@ -104,11 +86,10 @@ export const LoginForm = () => {
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
           name="senha"
+          disabled={isLoading}
+          required
         />
       </div>
-
-      {/* O botão e a mensagem de erro não precisam estar em um inputGroup,
-          pois o gap do form já os espaçará corretamente dos inputGroups. */}
 
       <FormButton type="submit" disabled={isLoading}>
         {isLoading ? 'Entrando...' : 'Entrar'}

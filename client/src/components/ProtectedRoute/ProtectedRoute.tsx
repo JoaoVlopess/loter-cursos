@@ -1,40 +1,41 @@
+// src/components/ProtectedRoute/ProtectedRoute.tsx
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import type { Usuario } from '../../types/Clientes/usuario'; // Importe o tipo Usuario
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; // Importe o hook useAuth
+import type { Usuario } from '../../types/Clientes/usuario';
 
 interface ProtectedRouteProps {
-
-  allowedTypes?: Usuario['tipo'][]; 
-  
-  redirectPath?: string;
+  allowedTypes?: Usuario['tipo'][];
+  redirectPath?: string; // Renomeado para ser mais genérico que só /login
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedTypes, redirectPath = '/' }) => {
-  const isAuthenticated = !!localStorage.getItem('authToken'); 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  allowedTypes,
+  redirectPath = '/login', // Redireciona para /login por padrão se não autenticado
+}) => {
+  const { isAuthenticated, user, isLoading } = useAuth(); // Pega do contexto
+  const location = useLocation();
+
+  if (isLoading) {
+    // Mostra um loader enquanto o AuthContext verifica o token no localStorage
+    return <div>Carregando autenticação...</div>;
+  }
+
   if (!isAuthenticated) {
-    return <Navigate to={redirectPath} replace />;
+    // Se não estiver autenticado, redireciona para a página de login (ou redirectPath)
+    // Passa a localização atual para que possa voltar após o login
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-
+  // Se 'allowedTypes' for fornecido, verifica se o usuário tem o perfil necessário
   if (allowedTypes && allowedTypes.length > 0) {
-    const userDataString = localStorage.getItem('userData');
-    let userType: Usuario['tipo'] | null = null;
-
-    if (userDataString) {
-      try {
-        const userData = JSON.parse(userDataString);
-        userType = userData.tipo;
-      } catch (e) {
-        console.error("Erro ao parsear dados do usuário do localStorage:", e);
-      }
-    }
-
-    //  Se o tipo do usuário não estiver na lista de tipos permitidos
-    if (!userType || !allowedTypes.includes(userType)) {
-      return <Navigate to={redirectPath} replace />;
+    if (!user || !allowedTypes.includes(user.tipo)) {
+      // Se não tiver o perfil, redireciona para uma página de "Não Autorizado"
+      // ou para a home se preferir.
+      return <Navigate to="/nao-autorizado" replace />; // Crie uma página /nao-autorizado
     }
   }
 
-  // Usuário autenticado e autorizado (se allowedTypes foi especificado), renderiza o conteúdo
-   return <Outlet />;
+  // Usuário autenticado e autorizado, renderiza o conteúdo da rota
+  return <Outlet />;
 };
