@@ -73,8 +73,7 @@ export const ProfessorEditPage = () => {
       }
     };
     fetchCursoDetails();
-  }, [cursoIdFromParams, API_URL_BASE]); // Adicionado API_URL_BASE por completude, embora seja constante.
-
+  }, [cursoIdFromParams]);
 
   // Estados para o modal de Aula
   const [isAulaModalOpen, setIsAulaModalOpen] = useState(false);
