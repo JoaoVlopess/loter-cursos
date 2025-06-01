@@ -41,7 +41,7 @@ export default function AppRoutes() {
       element: <ProtectedRoute allowedTypes={['PROFESSOR']} />,
       children: [
         { path: '/professor', element: <ProfArea /> },
-        { path: '/professor/curso/:id', element: <ProfessorEditPage /> },
+        { path: '/professor/curso/:cursoId', element: <ProfessorEditPage /> },
        
       ],
     },
@@ -49,7 +49,7 @@ export default function AppRoutes() {
       element: <ProtectedRoute allowedTypes={['ADMIN']} />,
       children: [
         { path: '/admin', element: <AdminArea /> },
-        { path: '/admin/curso/:id', element: <ProfessorEditPage /> },
+        { path: '/admin/curso/:cursoId', element: <ProfessorEditPage /> },
         // Adicione outras rotas específicas de professor aqui, se houver.
         // Exemplo:
         // {

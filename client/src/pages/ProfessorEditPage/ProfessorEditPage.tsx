@@ -32,26 +32,37 @@ export const ProfessorEditPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true); // Para o carregamento inicial da página
   const API_URL_BASE = 'http://localhost:3000'; // Mova para uma constante ou config
-
+  
   useEffect(() => {
     const fetchCursoDetails = async () => {
       if (!cursoIdFromParams) {
         console.warn("[ProfessorEditPage] ID do curso não disponível (cursoIdFromParams é falsy). Verifique a configuração da rota para :cursoId.");
+        setError("ID do curso não encontrado na URL. Não é possível carregar os detalhes do curso.");
+        setModulos([]); 
+        setCursoTitulo('');
         setIsLoadingPage(false);
         return;
       }
       setIsLoadingPage(true);
-      setError(null); // Limpa erros anteriores antes de uma nova busca
-      setModulos([]);   // Limpa módulos anteriores
-      setCursoTitulo('');
+      setError(null); 
+      // Clear data before fetching new data for the given cursoId
+      setModulos([]);   
+      setCursoTitulo(''); 
       try {
         const response = await axios.get<{ success: boolean, data: Curso }>(
-
           `${API_URL_BASE}/cursos/${cursoIdFromParams}/detalhes`
         );
+                console.log("[ProfessorEditPage - fetchCursoDetails] RESPOSTA COMPLETA DA API:", JSON.stringify(response.data, null, 2)); // LOG DETALHADO
+
         if (response.data.success && response.data.data) {
-          setModulos([]); // Limpa módulos se o ID não estiver presente
-          setCursoTitulo(''); // Limpa título do curso
+          setCursoTitulo(response.data.data.titulo);
+          // Assuming Curso type from API includes 'modulos' array.
+          // If 'modulos' are part of the Curso object from this endpoint:
+                    console.log("[ProfessorEditPage - fetchCursoDetails] Módulos recebidos da API:", JSON.stringify(response.data.data.modulos, null, 2)); // LOG DOS MÓDULOS
+
+          setModulos(response.data.data.modulos || []); 
+          // If not, modules might need a separate fetch call, and this line would change
+          // or be removed if another effect handles fetching modules.
         } else {
           const apiErrorMessage = (response.data as unknown as ApiErrorData).message || "Falha ao buscar detalhes do curso (API retornou erro).";
           console.error("[ProfessorEditPage] Erro da API ao buscar detalhes:", apiErrorMessage, "Resposta completa:", response.data);
@@ -73,7 +84,7 @@ export const ProfessorEditPage = () => {
       }
     };
     fetchCursoDetails();
-  }, [cursoIdFromParams]);
+  }, [cursoIdFromParams, API_URL_BASE]); // API_URL_BASE is a const, but good for completeness if it were from props/state
 
   // Estados para o modal de Aula
   const [isAulaModalOpen, setIsAulaModalOpen] = useState(false);
@@ -92,10 +103,12 @@ export const ProfessorEditPage = () => {
   };
 
   const handleOpenAddModuloModal = () => {
+    console.log("[handleOpenAddModuloModal] Função chamada!");
     const ordem = modulos.length > 0 ? Math.max(...modulos.map(m => m.ordem)) + 1 : 1;
     setNextModuloOrdem(ordem);
     setEditingModulo(null); // Indica que estamos adicionando, não editando
     setIsModuloModalOpen(true);
+    console.log("[handleOpenAddModuloModal] isModuloModalOpen DEVERIA ser true agora.");
   };
 
   const handleSaveModulo = async (moduloData: { titulo: string; ordem: number; descricao: string }) => {
@@ -135,7 +148,8 @@ export const ProfessorEditPage = () => {
           const novoModulo: Modulo = {
             ...moduloData, // Spread the data sent to the API
             id_modulo: response.data.id_modulo,
-            id_curso: parseInt(cursoIdFromParams, 10),
+            // cursoIdFromParams is guaranteed to be a truthy string here due to the check at the start of handleSaveModulo
+            id_curso: parseInt(cursoIdFromParams!, 10), 
             aulas: [] // New module starts with no aulas
           };
           setModulos(prevModulos => [...prevModulos, novoModulo].sort((a, b) => a.ordem - b.ordem));
@@ -194,16 +208,28 @@ export const ProfessorEditPage = () => {
   };
 
   const handleSaveAula = async (aulaData: Omit<Aula, 'id_aula' | 'id_modulo'>, aulaIdToUpdate?: number) => {
-    if (currentModuloIdForAula === null) return;
+    if (currentModuloIdForAula === null) {
+      console.error('[ProfessorEditPage - handleSaveAula] ERRO: currentModuloIdForAula é null. Não é possível salvar a aula.');
+      setError("ID do módulo não encontrado para salvar a aula.");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     const token = localStorage.getItem('authToken');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+    console.log("-------------------------------------------");
+    console.log("[ProfessorEditPage - handleSaveAula] INICIANDO TENTATIVA DE SALVAR AULA");
+    console.log('[ProfessorEditPage - handleSaveAula] Iniciando salvamento de aula.');
+    console.log('[ProfessorEditPage - handleSaveAula] Editando aula existente (aulaIdToUpdate):', aulaIdToUpdate);
+    console.log('[ProfessorEditPage - handleSaveAula] ID do módulo para a aula (currentModuloIdForAula):', currentModuloIdForAula);
+    console.log('[ProfessorEditPage - handleSaveAula] Dados da aula (aulaData):', JSON.stringify(aulaData, null, 2));
     try {
       if (aulaIdToUpdate) { // Editando aula existente
         // TODO: Implementar chamada PUT para /aulas/:aulaId
+        console.log(`[ProfessorEditPage - handleSaveAula] Enviando REQUISIÇÃO PUT para: ${API_URL_BASE}/aulas/${aulaIdToUpdate}`);
         const response = await axios.put(`${API_URL_BASE}/aulas/${aulaIdToUpdate}`, aulaData, { headers });
+        console.log('[ProfessorEditPage - handleSaveAula] Resposta da API (Atualização de Aula):', JSON.stringify(response.data, null, 2));
         if (response.data.success) {
           setModulos(prevModulos =>
             prevModulos.map(mod => {
@@ -217,14 +243,17 @@ export const ProfessorEditPage = () => {
             })
           );
         } else {
+          console.error('[ProfessorEditPage - handleSaveAula] Falha ao ATUALIZAR aula - API retornou erro:', response.data.message || 'Erro desconhecido da API');
           throw new Error(response.data.message || "Falha ao atualizar aula.");
         }
       } else { // Adicionando nova aula
+        console.log(`[ProfessorEditPage - handleSaveAula] Enviando REQUISIÇÃO POST para: ${API_URL_BASE}/modulos/${currentModuloIdForAula}/aulas`);
         const response = await axios.post<{ success: boolean, id_aula: number, message: string }>(
           `${API_URL_BASE}/modulos/${currentModuloIdForAula}/aulas`,
           aulaData,
           { headers }
         );
+        console.log('[ProfessorEditPage - handleSaveAula] Resposta da API (CRIAÇÃO de Aula):', JSON.stringify(response.data, null, 2));
         if (response.data.success && response.data.id_aula) {
           setModulos(prevModulos =>
             prevModulos.map(mod => {
@@ -240,22 +269,26 @@ export const ProfessorEditPage = () => {
             })
           );
         } else {
+          console.error('[ProfessorEditPage - handleSaveAula] Falha ao CRIAR aula - API retornou erro:', response.data.message || 'Erro desconhecido da API');
           throw new Error((response.data as unknown as ApiErrorData).message || "Falha ao criar aula.");
         }
       }
       handleCloseAulaModal();
     } catch (error: unknown) {
       let errorMessage = "Erro desconhecido ao salvar aula.";
-      if (axios.isAxiosError(error)) {
+      if (axios.isAxiosError(error)) { // Verifica se é um erro do Axios
         const axiosError = error as AxiosError<ApiErrorData>;
         errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar aula.";
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      console.error("Erro ao salvar aula:", error);
+      console.error("[ProfessorEditPage - handleSaveAula] ERRO CAPTURADO no CATCH:", error, "Mensagem processada:", errorMessage);
       setError(errorMessage);
+      // Não feche o modal em caso de erro, para que o usuário possa tentar novamente ou ver os dados.
     } finally {
       setIsLoading(false);
+      console.log("[ProfessorEditPage - handleSaveAula] FINALIZANDO TENTATIVA DE SALVAR AULA");
+      console.log("-------------------------------------------");
     }
   };
 
@@ -272,6 +305,14 @@ export const ProfessorEditPage = () => {
     handleCloseAulaModal(); // Fecha o modal após a exclusão
   };
 
+  // Logs para depuração do estado do botão e modal
+  console.log("-------------------------------------------");
+  console.log("[ProfessorEditPage Render] cursoIdFromParams:", cursoIdFromParams);
+  console.log("[ProfessorEditPage Render] isLoadingPage:", isLoadingPage);
+  console.log("[ProfessorEditPage Render] error:", error);
+  const buttonDisabled = !cursoIdFromParams || isLoadingPage || !!error;
+  console.log("[ProfessorEditPage Render] Botão '+ Adicionar Módulo' está desabilitado?", buttonDisabled);
+  console.log("[ProfessorEditPage Render] isModuloModalOpen:", isModuloModalOpen);
 
   return (
     <div className={styles.container}>
@@ -281,7 +322,10 @@ export const ProfessorEditPage = () => {
       </h1>
 
       <div className={styles.header}>
-        <FormButton onClick={handleOpenAddModuloModal}>
+        <FormButton 
+          onClick={handleOpenAddModuloModal}
+          disabled={!cursoIdFromParams || isLoadingPage || !!error} // Disable if no ID, loading, or critical page error
+        >
           + Adicionar Módulo
         </FormButton>
       </div>

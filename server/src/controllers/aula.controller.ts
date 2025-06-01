@@ -14,6 +14,8 @@ export const createAula = async (req: AuthRequest, res: Response, next: NextFunc
     const { moduloId } = req.params;
     const { titulo, descricao, conteudo, duracao, ordem } = req.body;
 
+    console.log(`[aula.controller - createAula] Requisição para criar aula no módulo ID: ${moduloId}`);
+    console.log(`[aula.controller - createAula] Dados recebidos (req.body):`, req.body);
     if (!titulo || ordem === undefined) {
         res.status(400).json({ success: false, message: 'Título e ordem são obrigatórios para a aula.' });
         return;
@@ -22,16 +24,19 @@ export const createAula = async (req: AuthRequest, res: Response, next: NextFunc
 
     try {
         const [moduloRows]: any[] = await pool.execute('SELECT id_modulo FROM modulo WHERE id_modulo = ?', [moduloId]);
+        console.log(`[aula.controller - createAula] Verificando existência do módulo ${moduloId}. Encontrados: ${moduloRows.length}`);
         if (moduloRows.length === 0) {
             res.status(404).json({ success: false, message: 'Módulo não encontrado para adicionar a aula.' });
             return;
         }
 
+        console.log(`[aula.controller - createAula] Módulo ${moduloId} encontrado. Tentando inserir aula com dados:`, { moduloId, titulo, descricao, conteudo, duracao, ordem });
         const [result]: any = await pool.execute(
             `INSERT INTO aula (id_modulo, titulo, descricao, conteudo, duracao, ordem) VALUES (?, ?, ?, ?, ?, ?)`,
             [moduloId, titulo, descricao, conteudo, duracao, ordem]
         );
-        res.status(201).json({ success: true, id_aula: result.insertId, message: "Aula criada com sucesso." });
+        console.log(`[aula.controller - createAula] Aula inserida com sucesso. ID da nova aula: ${result.insertId}`);
+        res.status(201).json({ success: true, id_aula: result.insertId, message: "Aula criada com sucesso."});
     } catch (err: any) {
         if (err.code === 'ER_DUP_ENTRY') { // Por causa da UNIQUE key (id_modulo, ordem)
             res.status(409).json({ success: false, message: 'Já existe uma aula com esta ordem neste módulo.' });

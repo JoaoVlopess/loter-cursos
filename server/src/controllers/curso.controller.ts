@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { pool } from '../database';
+import { RowDataPacket } from 'mysql2'; // Importar RowDataPacket se não estiver lá
 import { AuthRequest } from '../middlewares/authMiddleware'; // Usado para rotas protegidas
 
 // --- Importe seus tipos atualizados ---
@@ -20,7 +21,7 @@ export const getAllCursos = async (req: Request, res: Response, next: NextFuncti
     try {
         // A query já inclui c.id_professor implicitamente com c.* ou explicitamente
         // Vamos garantir que ele esteja explicitamente selecionado para clareza
-        const [rows]: any[] = await pool.execute(
+        const [rows] = await pool.execute<RowDataPacket[] & Curso[]>(
             `SELECT
                 c.id_curso,
                 c.titulo,
@@ -52,9 +53,12 @@ export const getAllCursos = async (req: Request, res: Response, next: NextFuncti
 export const getCursoDetalhes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { cursoId } = req.params;
 
+    console.log("==========================================================");
+    console.log(`[curso.controller - getCursoDetalhes] Buscando detalhes para curso ID: ${cursoId}`);
+
     try {
         // 1. Obter informações do curso
-        const [cursoRows]: any[] = await pool.execute(
+        const [cursoRows] = await pool.execute<RowDataPacket[] & Curso[]>(
             `SELECT c.*, u.nome as nome_professor
              FROM curso c
              JOIN professor p ON c.id_professor = p.id_professor
@@ -62,38 +66,55 @@ export const getCursoDetalhes = async (req: Request, res: Response, next: NextFu
              WHERE c.id_curso = ?`,
             [cursoId]
         );
-
+    
         if (cursoRows.length === 0) {
+            console.log(`[curso.controller - getCursoDetalhes] Curso ID: ${cursoId} não encontrado.`);
             res.status(404).json({ success: false, message: 'Curso não encontrado.' });
             return;
         }
         // **Usa o tipo Curso (que agora tem 'modulos')**
         const curso: Curso = cursoRows[0];
+        console.log(`[curso.controller - getCursoDetalhes] Curso encontrado: ${curso.titulo} (ID: ${curso.id_curso})`);
 
         // 2. Obter os módulos do curso
-        const [moduloRows]: any[] = await pool.execute(
+        const [dbModuloRows] = await pool.execute<RowDataPacket[] & Modulo[]>(
             `SELECT * FROM modulo WHERE id_curso = ? ORDER BY ordem ASC`,
             [cursoId]
         );
+        const modulosDoCurso: Modulo[] = dbModuloRows;
+        console.log(`[curso.controller - getCursoDetalhes] Módulos encontrados para o curso ${curso.id_curso}: ${modulosDoCurso.length}`);
+        modulosDoCurso.forEach(m => console.log(`  -> Módulo DB: ID ${m.id_modulo}, Título '${m.titulo}', Ordem ${m.ordem}`));
 
         // 3. Obter todas as aulas para esses módulos
         let aulaRows: Aula[] = []; // **Tipado como Aula[]**
-        if (moduloRows.length > 0) {
+        if (modulosDoCurso.length > 0) {
             // **Usa o tipo Modulo aqui**
-            const moduloIds = moduloRows.map((m: Modulo) => m.id_modulo);
-            const [aulas]: any[] = await pool.execute(
+            const moduloIds = modulosDoCurso.map((m: Modulo) => m.id_modulo);
+            console.log(`[curso.controller - getCursoDetalhes] IDs dos módulos para buscar aulas: [${moduloIds.join(', ')}]`);
+
+            console.log(`[curso.controller - getCursoDetalhes] EXECUTANDO QUERY para aulas com moduloIds: ${JSON.stringify(moduloIds)}`);
+            const [dbAulaRows] = await pool.execute<RowDataPacket[] & Aula[]>(
                 `SELECT * FROM aula WHERE id_modulo IN (?) ORDER BY ordem ASC`,
                 [moduloIds]
             );
-            aulaRows = aulas;
+            aulaRows = dbAulaRows;
+            console.log(`[curso.controller - getCursoDetalhes] QUERY para aulas EXECUTADA. Número de aulas retornadas: ${aulaRows.length}`);
+            console.log(`[curso.controller - getCursoDetalhes] Total de Aulas encontradas no DB para estes módulos: ${aulaRows.length}`);
+            aulaRows.forEach(a => console.log(`  -> Aula DB: ID ${a.id_aula}, Título '${a.titulo}', Ordem ${a.ordem}, MóduloID ${a.id_modulo}`));
         }
 
         // 4. Estruturar a resposta aninhada (usando os tipos)
-        curso.modulos = moduloRows.map((modulo: Modulo) => {
+        curso.modulos = modulosDoCurso.map((currentModulo: Modulo) => {
+            console.log(`[curso.controller - getCursoDetalhes] Processando módulo ID: ${currentModulo.id_modulo} ('${currentModulo.titulo}') para atribuir aulas.`);
             // **Usa o tipo Aula aqui**
             // **Agora 'modulo.aulas' existe no tipo Modulo**
-            modulo.aulas = aulaRows.filter((aula: Aula) => aula.id_modulo === modulo.id_modulo);
-            return modulo;
+            const aulasDesteModulo = aulaRows.filter((aula: Aula) => {
+                const match = aula.id_modulo === currentModulo.id_modulo;
+                // if (match) console.log(`    -> Atribuindo Aula ID ${aula.id_aula} ('${aula.titulo}') ao Módulo ID ${currentModulo.id_modulo}`);
+                return match;
+            });
+            console.log(`[curso.controller - getCursoDetalhes] Módulo ID ${currentModulo.id_modulo} ('${currentModulo.titulo}') ficou com ${aulasDesteModulo.length} aulas.`);
+            return { ...currentModulo, aulas: aulasDesteModulo.sort((a,b) => a.ordem - b.ordem) }; // Garante a ordem das aulas
         });
 
         res.json({ success: true, data: curso });
@@ -113,10 +134,16 @@ export const getCursoDetalhes = async (req: Request, res: Response, next: NextFu
  * @access  Logado (Sem checkRole, conforme solicitado)
  */
 export const createCurso = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { id_professor, titulo, descricao, carga_horaria } = req.body;
+    const { titulo, descricao, carga_horaria } = req.body;
+    let { id_professor } = req.body; // id_professor from body if admin is creating for someone else
 
-    // **AVISO:** Idealmente, esta rota deveria ser protegida por checkRole(['ADMIN']).
-
+    // **SEGURANÇA: Implementar verificação de role e propriedade**
+    // Exemplo: Se o usuário logado é PROFESSOR, ele só pode criar cursos para si mesmo.
+    // if (req.usuario?.tipo === 'PROFESSOR') {
+    //     id_professor = req.usuario.id_professor; // Ou o campo correspondente em req.usuario
+    // } else if (req.usuario?.tipo !== 'ADMIN') {
+    //     return res.status(403).json({ success: false, message: 'Acesso negado.' });
+    // }
     // Validação básica
     if (!id_professor || !titulo) {
         res.status(400).json({ success: false, message: 'ID do professor e título são obrigatórios.' });
@@ -125,7 +152,7 @@ export const createCurso = async (req: AuthRequest, res: Response, next: NextFun
 
     try {
         // Valida se o id_professor existe
-        const [prof]:any[] = await pool.execute('SELECT * FROM professor WHERE id_professor = ?', [id_professor]);
+        const [prof] = await pool.execute<RowDataPacket[]>('SELECT * FROM professor WHERE id_professor = ?', [id_professor]);
         if (prof.length === 0) {
              res.status(400).json({ success: false, message: 'ID do professor inválido.' });
              return;
@@ -155,17 +182,35 @@ export const updateCurso = async (req: AuthRequest, res: Response, next: NextFun
     const { cursoId } = req.params;
     const { id_professor, titulo, descricao, carga_horaria } = req.body;
 
-    // **AVISO:** Nenhuma verificação de quem está atualizando!
-
     // Validação básica
     if (!id_professor || !titulo) {
         res.status(400).json({ success: false, message: 'ID do professor e título são obrigatórios.' });
         return;
     }
-
+    // **SEGURANÇA: Implementar verificação de role e propriedade**
+    // 1. Verificar se o curso existe e quem é o proprietário
+    // 2. Se req.usuario.tipo === 'PROFESSOR', verificar se req.usuario.id_professor === curso.id_professor
+    // 3. Se req.usuario.tipo === 'ADMIN', permitir a edição.
+    // 4. Caso contrário, retornar 403 Forbidden.
+    // Exemplo (simplificado):
+    // if (!req.usuario) {
+    //    return res.status(401).json({ success: false, message: 'Não autenticado.' });
+    // }
+    // const [cursoOriginalRows] = await pool.execute<RowDataPacket[] & Pick<Curso, 'id_professor'>[]>(
+    //    'SELECT id_professor FROM curso WHERE id_curso = ?', [cursoId]
+    // );
+    // if (cursoOriginalRows.length === 0) {
+    //    return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
+    // }
+    // const cursoOriginal = cursoOriginalRows[0];
+    // if (req.usuario.tipo === 'PROFESSOR' && req.usuario.id_professor !== cursoOriginal.id_professor) {
+    //    return res.status(403).json({ success: false, message: 'Acesso negado: Você não é o proprietário deste curso.' });
+    // } else if (req.usuario.tipo !== 'PROFESSOR' && req.usuario.tipo !== 'ADMIN') { // Se não for PROFESSOR dono nem ADMIN
+    //    return res.status(403).json({ success: false, message: 'Acesso negado.' });
+    // }
     try {
-        // Valida se o id_professor existe
-        const [prof]:any[] = await pool.execute('SELECT * FROM professor WHERE id_professor = ?', [id_professor]);
+        // Valida se o novo id_professor (se estiver sendo alterado) existe
+        const [prof] = await pool.execute<RowDataPacket[]>('SELECT * FROM professor WHERE id_professor = ?', [id_professor]);
         if (prof.length === 0) {
              res.status(400).json({ success: false, message: 'ID do professor inválido.' });
              return;
@@ -203,13 +248,29 @@ export const updateCurso = async (req: AuthRequest, res: Response, next: NextFun
 export const deleteCurso = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { cursoId } = req.params;
 
-    // **AVISO:** Nenhuma verificação de quem está deletando!
+    // **SEGURANÇA: Implementar verificação de role e propriedade (similar ao updateCurso)**
+    // Exemplo (simplificado):
+    // if (!req.usuario) {
+    //    return res.status(401).json({ success: false, message: 'Não autenticado.' });
+    // }
+    // const [cursoOriginalRows] = await pool.execute<RowDataPacket[] & Pick<Curso, 'id_professor'>[]>(
+    //    'SELECT id_professor FROM curso WHERE id_curso = ?', [cursoId]
+    // );
+    // if (cursoOriginalRows.length === 0) {
+    //    return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
+    // }
+    // const cursoOriginal = cursoOriginalRows[0];
+    // if (req.usuario.tipo === 'PROFESSOR' && req.usuario.id_professor !== cursoOriginal.id_professor) {
+    //    return res.status(403).json({ success: false, message: 'Acesso negado: Você não é o proprietário deste curso.' });
+    // } else if (req.usuario.tipo !== 'PROFESSOR' && req.usuario.tipo !== 'ADMIN') {
+    //    return res.status(403).json({ success: false, message: 'Acesso negado.' });
+    // }
+
     // **CUIDADO:** Isso é um HARD DELETE. Devido ao 'ON DELETE CASCADE' nos módulos,
     // deletar um curso aqui irá deletar TODOS os seus módulos e TODAS as suas aulas.
-    // Considere implementar um 'Soft Delete' (marcar como inativo) no futuro.
-
+    // **RECOMENDAÇÃO:** Implementar 'Soft Delete' (ex: UPDATE curso SET ativo = FALSE WHERE id_curso = ?)
     try {
-        const [result]: any = await pool.execute(
+        const [result] = await pool.execute<any>( // ResultSetHeader para DELETE
             `DELETE FROM curso WHERE id_curso = ?`,
             [cursoId]
         );
@@ -226,45 +287,6 @@ export const deleteCurso = async (req: AuthRequest, res: Response, next: NextFun
         console.error("Erro ao deletar curso:", err);
         // Pode dar erro se houver outras dependências (ex: progressoCurso)
         // sem ON DELETE CASCADE ou SET NULL.
-        next(err);
-    }
-};
-
-/**
- * @route   GET /professores/:idProfessor/cursos
- * @desc    Obter todos os cursos de um professor específico pelo ID do professor
- * @access  Público (ou Logado, se preferir)
- */
-export const getCursosByProfessorId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { idProfessor } = req.params;
-
-    try {
-        // Verifica se o professor existe (opcional, mas bom para dar um 404 mais preciso)
-        const [professorRows]: any[] = await pool.execute(
-            `SELECT id_professor FROM professor WHERE id_professor = ?`,
-            [idProfessor]
-        );
-
-        if (professorRows.length === 0) {
-            res.status(404).json({ success: false, message: 'Professor não encontrado.' });
-            return;
-        }
-
-        // Busca os cursos do professor
-        const [cursoRows]: any[] = await pool.execute(
-            `SELECT c.*, u.nome as nome_professor_responsavel 
-             FROM curso c
-             JOIN professor p ON c.id_professor = p.id_professor
-             JOIN usuario u ON p.id_usuario = u.id_usuario
-             WHERE c.id_professor = ?
-             ORDER BY c.titulo ASC`,
-            [idProfessor]
-        );
-
-        res.json({ success: true, data: cursoRows });
-
-    } catch (err: any) {
-        console.error("Erro ao buscar cursos pelo ID do professor:", err);
         next(err);
     }
 };
