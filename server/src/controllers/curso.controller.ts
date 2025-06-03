@@ -86,21 +86,46 @@ export const getCursoDetalhes = async (req: Request, res: Response, next: NextFu
         modulosDoCurso.forEach(m => console.log(`  -> Módulo DB: ID ${m.id_modulo}, Título '${m.titulo}', Ordem ${m.ordem}`));
 
         // 3. Obter todas as aulas para esses módulos
-        let aulaRows: Aula[] = []; // **Tipado como Aula[]**
+        let aulaRows: Aula[] = [];
         if (modulosDoCurso.length > 0) {
-            // **Usa o tipo Modulo aqui**
-            const moduloIds = modulosDoCurso.map((m: Modulo) => m.id_modulo);
+            const moduloIds = modulosDoCurso.map((m: Modulo) => m.id_modulo); // Isso deve gerar [1] no seu caso
             console.log(`[curso.controller - getCursoDetalhes] IDs dos módulos para buscar aulas: [${moduloIds.join(', ')}]`);
 
-            console.log(`[curso.controller - getCursoDetalhes] EXECUTANDO QUERY para aulas com moduloIds: ${JSON.stringify(moduloIds)}`);
-            const [dbAulaRows] = await pool.execute<RowDataPacket[] & Aula[]>(
-                `SELECT * FROM aula WHERE id_modulo IN (?) ORDER BY ordem ASC`,
-                [moduloIds]
-            );
-            aulaRows = dbAulaRows;
-            console.log(`[curso.controller - getCursoDetalhes] QUERY para aulas EXECUTADA. Número de aulas retornadas: ${aulaRows.length}`);
-            console.log(`[curso.controller - getCursoDetalhes] Total de Aulas encontradas no DB para estes módulos: ${aulaRows.length}`);
-            aulaRows.forEach(a => console.log(`  -> Aula DB: ID ${a.id_aula}, Título '${a.titulo}', Ordem ${a.ordem}, MóduloID ${a.id_modulo}`));
+            // *** TENTE ESTA ALTERAÇÃO ***
+            // Se moduloIds é um array como [1, 2, 3], passe-o diretamente.
+            // A biblioteca mysql2 deve conseguir lidar com isso para a cláusula IN.
+            if (moduloIds.length > 0) { // Importante para não fazer IN ()
+                const [dbAulaRows] = await pool.execute<RowDataPacket[] & Aula[]>(
+                    `SELECT * FROM aula WHERE id_modulo IN (?) ORDER BY ordem ASC`,
+                    [moduloIds] // <<-- O mysql2/promise geralmente espera um array contendo o array para o IN
+                                //      Ex: Se moduloIds = [1, 2], aqui seria [[1, 2]]
+                                //      MAS, em alguns contextos ou versões, passar só moduloIds pode funcionar.
+                                //      Vamos tentar garantir que está sendo passado como o driver espera.
+                );
+                // Para mysql2, a forma mais canônica para múltiplos valores no IN é construir os placeholders:
+                // const placeholders = moduloIds.map(() => '?').join(',');
+                // const sql = `SELECT * FROM aula WHERE id_modulo IN (${placeholders}) ORDER BY ordem ASC`;
+                // const [dbAulaRows] = await pool.execute<RowDataPacket[] & Aula[]>(sql, moduloIds);
+
+                // VAMOS TESTAR A FORMA PADRÃO DO mysql2/promise que é [[ids_array]]
+                // ou, para ser mais explícito com a biblioteca, construir os placeholders.
+
+                // A forma mais segura e recomendada pela documentação do mysql2 para cláusulas IN
+                // é formatar a query antes ou usar múltiplos placeholders se o array for de tamanho fixo.
+                // Para um array dinâmico, a expansão de '?' é a melhor:
+                let dbAulaRowsQuery: RowDataPacket[] & Aula[] = [];
+                if (moduloIds.length > 0) {
+                    const placeholders = moduloIds.map(() => '?').join(',');
+                    const queryAulas = `SELECT * FROM aula WHERE id_modulo IN (${placeholders}) ORDER BY ordem ASC`;
+                    console.log(`[DEBUG] Query Aulas Montada: ${queryAulas} com valores: ${JSON.stringify(moduloIds)}`);
+                    const [resultAulas] = await pool.execute<RowDataPacket[] & Aula[]>(queryAulas, moduloIds);
+                    dbAulaRowsQuery = resultAulas;
+                }
+                aulaRows = dbAulaRowsQuery;
+
+                console.log(`[curso.controller - getCursoDetalhes] Total de Aulas encontradas no DB para [${moduloIds.join(', ')}]: ${aulaRows.length}`);
+                aulaRows.forEach(a => console.log(`  -> Aula DB: ID ${a.id_aula}, Título '${a.titulo}', Ordem ${a.ordem}, MóduloID ${a.id_modulo}`));
+            }
         }
 
         // 4. Estruturar a resposta aninhada (usando os tipos)
