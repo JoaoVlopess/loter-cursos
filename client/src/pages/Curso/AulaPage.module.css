@@ -145,3 +145,31 @@
   color: rgba(255, 255, 255, 0.8);
   margin-top: 0.5rem;
 }
+
+.submitButton{
+  padding: 1rem;
+  margin-top: 10px;
+  background-color: rgba(117, 116, 116, 0.5);
+  border-radius: 5px;
+  color: #ccc;
+}
+
+.submitButton:hover{
+  background-color: rgba(153, 152, 152, 0.5);
+}
+
+.commentsList {
+  width: 100%;
+  max-width: 960px;
+  margin-top: 2rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.singleComment {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+  color: #ccc;
+}
