@@ -18,6 +18,8 @@ export const NavBar = () => {
     const dropdownRef = useRef<HTMLDivElement>(null); //referencia para o menu
     const [currentUser, setCurrentUser] = useState<Usuario | null>(null); // Usa o tipo Usuario
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+        const [userToken, setUserToken] = useState<string | null>(null); // Estado para o token
+
 
     // Recupera o ID do usuário logado (ex: do localStorage)
     const [currentUserId, setCurrentUserId] = useState<number | null>(() => {
@@ -46,6 +48,12 @@ export const NavBar = () => {
         };
     }, []);
        useEffect(() => {
+         // Recupera o token do localStorage
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (storedToken) {
+            setUserToken(storedToken);
+        }
+
         if (currentUserId) {
             const fetchUserData = async () => {
                 try {
@@ -81,6 +89,7 @@ export const NavBar = () => {
         }
         setCurrentUserId(null); // Limpa o ID do usuário
         setCurrentUser(null);   // Limpa os dados do usuário
+        setUserToken(null);     // Limpa o token do estado
         setIsDropdownOpen(false);
         // Opcional: redirecionar para a página de login
         // window.location.href = '/login'
@@ -177,6 +186,14 @@ return (
           <SlArrowDown /> {/*Seta para o Dropdown*/}
         </button>
 
+         {/* Exibição do Token (APENAS PARA DEBUG) */}
+        {userToken && (
+          <div style={{ padding: '5px', backgroundColor: '#f0f0f0', marginTop: '5px', fontSize: '10px', wordBreak: 'break-all' }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>Token (Debug):</p>
+            <p style={{ margin: 0 }}>{userToken}</p>
+          </div>
+        )}
+
         {/* Dropdown */}
         {isDropdownOpen && (
           <div className={styles.dropdown}>
@@ -185,7 +202,7 @@ return (
                     Meu Perfil
                 </button>
             )}
-            <a href="/certificados" className={styles.dropdown_item}>Meus Certificados</a>
+            
             {currentUser ? (
                 <button onClick={handleLogout} className={styles.dropdown_item}>Sair</button>
             ) : (
