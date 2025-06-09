@@ -62,9 +62,18 @@
   padding: 10px 16px;
   color: white;
   text-decoration: none;
-  display: block;
-  border-bottom: 1px solid #444;
+  display: block; /* Importante para que o width: 100% funcione corretamente em elementos inline como <a> */
+  border: none; /* Remove a borda padrão de botões, se houver */
+  background: none; /* Remove o fundo padrão de botões */
+  width: 100%; /* Faz o item ocupar toda a largura */
+  text-align: left; /* Alinha o texto à esquerda, comum para itens de menu */
+  cursor: pointer; /* Mantém o cursor de ponteiro */
+  border-bottom: 1px solid #444; /* Você já tinha isso, apenas mantendo */
   transition: background 0.2s;
+}
+
+.dropdown_item:last-child {
+  border-bottom: none; /* Remove a borda do último item para um visual mais limpo */
 }
 
 .dropdown_item:hover {

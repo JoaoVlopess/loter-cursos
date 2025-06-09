@@ -9,15 +9,18 @@ import { ProfArea } from "../pages/ProfArea/ProfArea";
 import { ProfessorEditPage } from "../pages/ProfessorEditPage/ProfessorEditPage";
 import { ProtectedRoute } from "../components/ProtectedRoute/ProtectedRoute";
 import { AdminArea } from "../pages/AdminArea/AdminArea";
-// import { useUser } from "../hooks/userUser";
-// import { ProfessorCursosPage } from "../pages/Professor/ProfessorCursosPage";
-// import { ProfessorCursoPage } from "../pages/Professor/ProfessorCursoPage";
 
 export default function AppRoutes() {
   return useRoutes([
-    { path: '/', element: <LoginPage /> },
+    // --- Rotas Públicas ---
+    { path: '/login', element: <LoginPage /> }, // <-- CORRIGIDO: Agora a rota é /login
     { path: '/cadastro', element: <CadastroPage /> },
+    
+    // --- Redirecionamento da Raiz ---
+    // Se alguém acessar a raiz do site, será redirecionado para a página de login.
+    { path: '/', element: <Navigate to="/login" replace /> },
 
+    // --- Rotas Protegidas ---
     // Rotas protegidas para qualquer usuário autenticado
     {
       element: <ProtectedRoute />,
@@ -28,11 +31,10 @@ export default function AppRoutes() {
           element: <CursoLayout />,
           children: [
             { path: 'aula/:aulaId', element: <AulaPage /> },
-            { index: true, element: <Navigate to="aula/1" replace /> },
+            // Opcional: Se quiser que ao entrar no curso já vá para a primeira aula, ajuste o :aulaId
+            // { index: true, element: <Navigate to="aula/1" replace /> }, 
           ],
         },
-        // Adicione outras rotas aqui que devem ser acessíveis
-        // por qualquer usuário autenticado.
       ],
     },
 
@@ -41,29 +43,20 @@ export default function AppRoutes() {
       element: <ProtectedRoute allowedTypes={['PROFESSOR']} />,
       children: [
         { path: '/professor', element: <ProfArea /> },
-        { path: '/professor/curso/:cursoId', element: <ProfessorEditPage /> },
-       
+        { path: '/professor/curso/:cursoId', element: <ProfessorEditPage /> }, // Ajuste o param para :cursoId se for o padrão
       ],
     },
+
+    // Rotas protegidas especificamente para ADMINS
     {
       element: <ProtectedRoute allowedTypes={['ADMIN']} />,
       children: [
         { path: '/admin', element: <AdminArea /> },
-        { path: '/admin/curso/:cursoId', element: <ProfessorEditPage /> },
-        // Adicione outras rotas específicas de professor aqui, se houver.
-        // Exemplo:
-        // {
-        //   path: '/professor/cursos',
-        //   element: <ProfessorCursosPage /> // Certifique-se de importar este componente
-        // },
+        { path: '/admin/curso/:cursoId', element: <ProfessorEditPage /> }, // Ajuste o param para :cursoId se for o padrão
       ],
     },
-
-    // Você pode adicionar mais blocos de ProtectedRoute para outros tipos de usuário,
-    // como 'ADMIN', se necessário.
-    // Exemplo:
-    // { element: <ProtectedRoute allowedTypes={['ADMIN']} />, children: [...] },
- 
-     { path: '*', element: <NotFoundPage /> }
+ 
+    // Rota "Catch-All" para páginas não encontradas
+    { path: '*', element: <NotFoundPage /> }
   ]);
 }
