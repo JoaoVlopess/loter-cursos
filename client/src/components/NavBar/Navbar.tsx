@@ -23,8 +23,13 @@ export const NavBar = () => {
 
     // Recupera o ID do usuário logado (ex: do localStorage)
     const [currentUserId, setCurrentUserId] = useState<number | null>(() => {
-        const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-        return storedUserId ? parseInt(storedUserId, 10) : null;
+         if (typeof window === 'undefined') return null;
+        const storedUserId = localStorage.getItem('userId');
+        if (storedUserId) {
+            const id = parseInt(storedUserId, 10);
+            return !isNaN(id) ? id : null; // Garante que seja um número válido ou null
+        }
+        return null;
     });
 
     // Type guards para verificar o tipo de usuário
@@ -47,6 +52,30 @@ export const NavBar = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    useEffect(() => {
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'userId') {
+                const newUserId = event.newValue;
+                if (newUserId) {
+                    const id = parseInt(newUserId, 10);
+                    setCurrentUserId(!isNaN(id) ? id : null);
+                } else {
+                    setCurrentUserId(null);
+                }
+            }
+            if (event.key === 'token') {
+                setUserToken(event.newValue);
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []); // Executa apenas na montagem e desmontagem para adicionar/remover o listener
+
        useEffect(() => {
          // Recupera o token do localStorage
         const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
