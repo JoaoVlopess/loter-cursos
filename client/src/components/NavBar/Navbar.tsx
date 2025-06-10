@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext'; // Importa do AuthContext
 // import type { ApiErrorResponse } from '../../services/apiClient';
 // AuthUser também não é mais necessário aqui se o modal for removido e user do useAuth for suficiente
 // import type { AuthUser } from '../../context/AuthContext';
-
+//teste
 
 export const NavBar: React.FC = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
