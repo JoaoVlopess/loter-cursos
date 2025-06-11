@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { pool } from '../database';
-import { AuthRequest } from '../middlewares/authMiddleware'; // Para pegar o id_usuario logado
+import professorDAO from '../dao/professorDAO'; // <-- Importa o DAO
+import { AuthRequest } from '../middlewares/authMiddleware';
 
 /**
  * @route   GET /professores/meus-cursos
@@ -16,16 +16,9 @@ export const getMeusCursos = async (req: AuthRequest, res: Response, next: NextF
     }
 
     try {
-        const [rows]: any[] = await pool.execute(
-            `SELECT c.*, u_prof.nome as nome_professor_responsavel
-             FROM curso c
-             JOIN professor p ON c.id_professor = p.id_professor
-             JOIN usuario u_prof ON p.id_usuario = u_prof.id_usuario
-             WHERE p.id_usuario = ?
-             ORDER BY c.titulo ASC`,
-            [id_usuario_logado]
-        );
-        res.json({ success: true, data: rows });
+        // O controller agora apenas chama o método do DAO
+        const cursos = await professorDAO.findCursosByUsuarioId(id_usuario_logado);
+        res.json({ success: true, data: cursos });
     } catch (err: any) {
         console.error("Erro ao buscar cursos do professor:", err);
         next(err);
@@ -41,26 +34,17 @@ export const getCursosByProfessorId = async (req: Request, res: Response, next: 
     const { idProfessor } = req.params;
 
     try {
-        const [professorRows]: any[] = await pool.execute(
-            `SELECT id_professor FROM professor WHERE id_professor = ?`,
-            [idProfessor]
-        );
-
-        if (professorRows.length === 0) {
+        // 1. Valida se o professor existe usando o DAO
+        const professor = await professorDAO.findById(parseInt(idProfessor, 10));
+        if (!professor) {
             res.status(404).json({ success: false, message: 'Professor não encontrado.' });
             return;
         }
 
-        const [cursoRows]: any[] = await pool.execute(
-            `SELECT c.*, u.nome as nome_professor_responsavel 
-             FROM curso c
-             JOIN professor p ON c.id_professor = p.id_professor
-             JOIN usuario u ON p.id_usuario = u.id_usuario
-             WHERE c.id_professor = ?
-             ORDER BY c.titulo ASC`,
-            [idProfessor]
-        );
-        res.json({ success: true, data: cursoRows });
+        // 2. Se existe, busca os cursos usando o DAO
+        const cursos = await professorDAO.findCursosByProfessorId(parseInt(idProfessor, 10));
+        res.json({ success: true, data: cursos });
+
     } catch (err: any) {
         console.error("Erro ao buscar cursos pelo ID do professor:", err);
         next(err);

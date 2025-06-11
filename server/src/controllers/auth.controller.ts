@@ -1,90 +1,113 @@
 import { Request, Response, NextFunction } from 'express';
-import { pool } from '../database';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../../config'; 
+import { JWT_SECRET } from '../../config';
+import usuarioDAO from '../dao/usuarioDAO'; // Importa o DAO
 
 const SALT_ROUNDS = 10;
 
+/**
+ * @route   POST /cadastro
+ * @desc    Cadastra um novo usuário
+ * @access  Público
+ */
 export const cadastrarUsuario = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { nome, cpf, email, senha, data_nascimento, tipo, especialidade, cargo } =
-    req.body;
+  const { nome, cpf, email, senha, data_nascimento, tipo, especialidade, cargo } = req.body;
+
+  // Validação de entrada básica
+  if (!nome || !email || !senha || !tipo) {
+      res.status(400).json({ success: false, message: 'Nome, email, senha e tipo são obrigatórios.' });
+      return;
+  }
+  if (tipo === 'PROFESSOR' && !especialidade) {
+        res.status(400).json({ success: false, message: 'Especialidade é obrigatória para Professor.' });
+        return;
+  }
+  if (tipo === 'ADMIN' && !cargo) {
+        res.status(400).json({ success: false, message: 'Cargo é obrigatório para Admin.' });
+        return;
+  }
+
+  // Lógica de negócio (hashing) permanece no controller
   try {
-    const hashed = await bcrypt.hash(senha, SALT_ROUNDS);
-    const [result]: any = await pool.execute(
-      `INSERT INTO usuario
-         (nome, cpf, email, senha, data_nascimento, tipo)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [nome, cpf, email, hashed, data_nascimento, tipo]
-    );
+    const senha_hash = await bcrypt.hash(senha, SALT_ROUNDS);
 
-    const id_usuario = result.insertId;
-    if (tipo === 'ALUNO') {
-      await pool.execute(`INSERT INTO aluno (id_usuario) VALUES (?)`, [id_usuario]);
-    } else if (tipo === 'PROFESSOR') {
-      await pool.execute(
-        `INSERT INTO professor (id_usuario, especialidade) VALUES (?, ?)`,
-        [id_usuario, especialidade]
-      );
-    } else if (tipo === 'ADMIN') {
-      await pool.execute(
-        `INSERT INTO administrador (id_usuario, cargo) VALUES (?, ?)`,
-        [id_usuario, cargo]
-      );
-    }
+    // O controller prepara os dados e chama o DAO
+    const novoUsuarioId = await usuarioDAO.create({
+      nome, cpf, email, senha_hash, data_nascimento, tipo, especialidade, cargo
+    });
 
-    res.status(201).json({ success: true, id_usuario });
+    res.status(201).json({ success: true, id_usuario: novoUsuarioId, message: "Usuário criado com sucesso." });
+
   } catch (err: any) {
-    next(err);
+    // Trata erros que o DAO pode lançar, como email duplicado
+    if (err.code === 'ER_DUP_ENTRY') {
+      res.status(409).json({ success: false, message: 'Email ou CPF já cadastrado.' });
+    } else {
+      console.error("Erro ao cadastrar usuário:", err);
+      next(err);
+    }
   }
 };
 
+
+/**
+ * @route   POST /login
+ * @desc    Autentica um usuário e retorna um token JWT
+ * @access  Público
+ */
 export const loginUsuario = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-
-  console.log('REQ BODY:', req.body);  // <---- AQUI!
-  
+  console.log('REQ BODY:', req.body);
   const { email, senha } = req.body;
-  try {
-    const [rows]: any[] = await pool.execute(
-      `SELECT * FROM usuario WHERE email = ? AND ativo = TRUE`,
-      [email]
-    );
 
-    if (rows.length === 0) {
+  // Validação explícita de tipo e existência para garantir a segurança de tipo
+  if (typeof email !== 'string' || typeof senha !== 'string' || !email || !senha) {
+    res.status(400).json({ success: false, message: 'Email e senha são obrigatórios e devem ser do tipo string.' });
+    return;
+  }
+
+  try {
+    // 1. Busca o usuário pelo email usando o DAO
+    const usuario = await usuarioDAO.findByEmail(email);
+
+    if (!usuario) {
       res.status(401).json({ success: false, message: 'Credenciais inválidas' });
-      return;   // ⬅️ apenas sai da função, sem retornar o objeto Response
+      return;
     }
 
-    const usuario = rows[0];
-
-    console.log('Senha do request (plain text):', senha);
-    console.log('Hash da senha do banco:', usuario.senha); // Verifique se este é um hash válido (string longa)
+    // 2. Compara a senha (lógica de autenticação)
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    console.log('Resultado da comparação (senhaValida):', senhaValida); // Deve ser true para login sucesso
+
     if (!senhaValida) {
       res.status(401).json({ success: false, message: 'Credenciais inválidas' });
-      return;   // ⬅️ mesma coisa aqui
+      return;
     }
 
-        // Remova: const jwt_secret = process.env.JWT_SECRET!;
-    // E use o JWT_SECRET importado na linha do jwt.sign:
-    const token = jwt.sign(
-      { id_usuario: usuario.id_usuario, tipo: usuario.tipo },
-      JWT_SECRET, // <--- Use o importado de config.ts
-      { expiresIn: '2h' }
-    );
+    // 3. Gera o token JWT com dados úteis no payload
+    const payload = {
+      id_usuario: usuario.id_usuario,
+      tipo: usuario.tipo,
+      id_professor: usuario.id_professor,
+      id_aluno: usuario.id_aluno,
+      id_admin: usuario.id_admin
+    };
 
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+
+    // Remove a senha do objeto de usuário antes de enviar a resposta
     const { senha: _, ...userWithoutPassword } = usuario;
     res.json({ success: true, token, usuario: userWithoutPassword });
+
   } catch (err: any) {
+    console.error("Erro no processo de login:", err);
     next(err);
   }
 };

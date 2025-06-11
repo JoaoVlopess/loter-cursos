@@ -1,44 +1,83 @@
 import { Request, Response, NextFunction } from 'express';
-import { pool } from '../database';
+import aulaDAO from '../dao/aulaDAO'; // <-- Importa o DAO
 import { AuthRequest } from '../middlewares/authMiddleware';
-
+import { normalizeTitle } from '../utils/stringUtils';
 // =============================================================================
-// ## Criar uma Nova Aula (Dentro de um Módulo)
+// ## Criar uma Nova Aula (Refatorado)
 // =============================================================================
-/**
- * @route   POST /modulos/:moduloId/aulas
- * @desc    Criar uma nova aula para um módulo
- * @access  Logado (SEM CHECKROLE)
- */
 export const createAula = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { moduloId } = req.params;
-    const { titulo, descricao, conteudo, duracao, ordem } = req.body;
+    // Captura o 'force' do corpo da requisição
+    const { titulo, descricao, conteudo, duracao, ordem, force } = req.body;
 
-    console.log(`[aula.controller - createAula] Requisição para criar aula no módulo ID: ${moduloId}`);
-    console.log(`[aula.controller - createAula] Dados recebidos (req.body):`, req.body);
     if (!titulo || ordem === undefined) {
         res.status(400).json({ success: false, message: 'Título e ordem são obrigatórios para a aula.' });
         return;
     }
-    // TODO: Adicionar verificação se o usuário logado pode adicionar aula a este moduloId
 
     try {
-        const [moduloRows]: any[] = await pool.execute('SELECT id_modulo FROM modulo WHERE id_modulo = ?', [moduloId]);
-        console.log(`[aula.controller - createAula] Verificando existência do módulo ${moduloId}. Encontrados: ${moduloRows.length}`);
-        if (moduloRows.length === 0) {
+        const moduloExists = await aulaDAO.checkModuloExists(parseInt(moduloId, 10));
+        if (!moduloExists) {
             res.status(404).json({ success: false, message: 'Módulo não encontrado para adicionar a aula.' });
             return;
         }
 
-        console.log(`[aula.controller - createAula] Módulo ${moduloId} encontrado. Tentando inserir aula com dados:`, { moduloId, titulo, descricao, conteudo, duracao, ordem });
-        const [result]: any = await pool.execute(
-            `INSERT INTO aula (id_modulo, titulo, descricao, conteudo, duracao, ordem) VALUES (?, ?, ?, ?, ?, ?)`,
-            [moduloId, titulo, descricao, conteudo, duracao, ordem]
-        );
-        console.log(`[aula.controller - createAula] Aula inserida com sucesso. ID da nova aula: ${result.insertId}`);
-        res.status(201).json({ success: true, id_aula: result.insertId, message: "Aula criada com sucesso."});
+        const titulosExistentes = await aulaDAO.findTitlesByModuloId(parseInt(moduloId, 10));
+        let warning = null;
+        
+        
+        const novoTituloNormalizado = normalizeTitle(titulo);
+        const novoTituloIdentico = titulo.trim().toLowerCase();
+
+        let similarMatch: string | null = null;
+        let identicalMatch: string | null = null;
+
+        for (const tituloExistente of titulosExistentes) {
+            // Verifica primeiro por nomes EXATAMENTE iguais (ignorando maiúsculas/minúsculas)
+            if (tituloExistente.trim().toLowerCase() === novoTituloIdentico) {
+                identicalMatch = tituloExistente;
+                break; // Encontrou um idêntico, esta é a maior prioridade.
+            }
+            // Se ainda não achamos um similar, vamos procurar
+            if (!similarMatch && normalizeTitle(tituloExistente) === novoTituloNormalizado) {
+                similarMatch = tituloExistente;
+            }
+        }
+
+        // Define a mensagem de aviso com base na prioridade (idêntico > similar)
+        if (identicalMatch) {
+            warning = {
+                type: 'IDENTICAL_NAME_FOUND',
+                message: `Aviso: Já existe uma aula com o nome EXATO "${identicalMatch}". Deseja criar mesmo assim?`,
+                similarTo: identicalMatch
+            };
+        } else if (similarMatch) {
+            warning = {
+                type: 'SIMILAR_NAME_FOUND',
+                message: `Aviso: O nome dessa aula é muito parecido com um já existente ('${similarMatch}'). Deseja criar mesmo assim?`,
+                similarTo: similarMatch
+            };
+        }
+
+        if (warning && !force) {
+            res.status(409).json({
+                success: false,
+                code: 'CONFIRMATION_REQUIRED',
+                warning: warning
+            });
+            return;
+        }
+        
+        const novaAulaId = await aulaDAO.create(parseInt(moduloId), { titulo, descricao, ordem });
+
+        res.status(201).json({
+            success: true,
+            id_aula: novaAulaId,
+            message: "Aula criada com sucesso."
+        });
+
     } catch (err: any) {
-        if (err.code === 'ER_DUP_ENTRY') { // Por causa da UNIQUE key (id_modulo, ordem)
+        if (err.code === 'ER_DUP_ENTRY') {
             res.status(409).json({ success: false, message: 'Já existe uma aula com esta ordem neste módulo.' });
         } else {
             console.error("Erro ao criar aula:", err);
@@ -47,28 +86,21 @@ export const createAula = async (req: AuthRequest, res: Response, next: NextFunc
     }
 };
 
+
 // =============================================================================
-// ## Listar Aulas de um Módulo Específico
+// ## Listar Aulas de um Módulo Específico (Refatorado)
 // =============================================================================
-/**
- * @route   GET /modulos/:moduloId/aulas
- * @desc    Listar todas as aulas de um módulo específico
- * @access  Público/Logado
- */
 export const getAulasByModulo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { moduloId } = req.params;
     try {
-        const [moduloRows]: any[] = await pool.execute('SELECT id_modulo FROM modulo WHERE id_modulo = ?', [moduloId]);
-        if (moduloRows.length === 0) {
+        const moduloExists = await aulaDAO.checkModuloExists(parseInt(moduloId));
+        if (!moduloExists) {
             res.status(404).json({ success: false, message: 'Módulo não encontrado.' });
             return;
         }
 
-        const [aulaRows]: any[] = await pool.execute(
-            `SELECT * FROM aula WHERE id_modulo = ? ORDER BY ordem ASC`,
-            [moduloId]
-        );
-        res.json({ success: true, data: aulaRows });
+        const aulas = await aulaDAO.findByModuloId(parseInt(moduloId));
+        res.json({ success: true, data: aulas });
     } catch (err: any) {
         console.error("Erro ao listar aulas do módulo:", err);
         next(err);
@@ -76,25 +108,17 @@ export const getAulasByModulo = async (req: Request, res: Response, next: NextFu
 };
 
 // =============================================================================
-// ## Obter uma Aula Específica
+// ## Obter uma Aula Específica (Refatorado)
 // =============================================================================
-/**
- * @route   GET /aulas/:aulaId
- * @desc    Obter uma aula específica pelo ID
- * @access  Público/Logado
- */
 export const getAulaById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { aulaId } = req.params;
     try {
-        const [rows]: any[] = await pool.execute(
-            `SELECT * FROM aula WHERE id_aula = ?`,
-            [aulaId]
-        );
-        if (rows.length === 0) {
+        const aula = await aulaDAO.findById(parseInt(aulaId));
+        if (!aula) {
             res.status(404).json({ success: false, message: 'Aula não encontrada.' });
             return;
         }
-        res.json({ success: true, data: rows[0] });
+        res.json({ success: true, data: aula });
     } catch (err: any) {
         console.error("Erro ao buscar aula por ID:", err);
         next(err);
@@ -102,13 +126,8 @@ export const getAulaById = async (req: Request, res: Response, next: NextFunctio
 };
 
 // =============================================================================
-// ## Atualizar uma Aula
+// ## Atualizar uma Aula (Refatorado)
 // =============================================================================
-/**
- * @route   PUT /aulas/:aulaId
- * @desc    Atualizar uma aula existente
- * @access  Logado (SEM CHECKROLE)
- */
 export const updateAula = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { aulaId } = req.params;
     const { titulo, descricao, conteudo, duracao, ordem } = req.body;
@@ -117,20 +136,16 @@ export const updateAula = async (req: AuthRequest, res: Response, next: NextFunc
         res.status(400).json({ success: false, message: 'Título e ordem são obrigatórios.' });
         return;
     }
-    // TODO: Adicionar verificação se o usuário logado pode editar esta aula
-
+    
     try {
-        const [result]: any = await pool.execute(
-            `UPDATE aula SET titulo = ?, descricao = ?, conteudo = ?, duracao = ?, ordem = ? WHERE id_aula = ?`,
-            [titulo, descricao, conteudo, duracao, ordem, aulaId]
-        );
-        if (result.affectedRows === 0) {
+        const success = await aulaDAO.update(parseInt(aulaId), { titulo, descricao, conteudo, duracao, ordem });
+        if (!success) {
             res.status(404).json({ success: false, message: 'Aula não encontrada para atualização.' });
             return;
         }
         res.json({ success: true, message: 'Aula atualizada com sucesso.' });
     } catch (err: any) {
-         if (err.code === 'ER_DUP_ENTRY') { // Por causa da UNIQUE key (id_modulo, ordem)
+        if (err.code === 'ER_DUP_ENTRY') {
             res.status(409).json({ success: false, message: 'Erro de ordem duplicada. Verifique a ordem das aulas.' });
         } else {
             console.error("Erro ao atualizar aula:", err);
@@ -140,23 +155,14 @@ export const updateAula = async (req: AuthRequest, res: Response, next: NextFunc
 };
 
 // =============================================================================
-// ## Deletar uma Aula
+// ## Deletar uma Aula (Refatorado)
 // =============================================================================
-/**
- * @route   DELETE /aulas/:aulaId
- * @desc    Deletar uma aula
- * @access  Logado (SEM CHECKROLE)
- */
 export const deleteAula = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { aulaId } = req.params;
-    // TODO: Adicionar verificação se o usuário logado pode deletar esta aula
 
     try {
-        const [result]: any = await pool.execute(
-            `DELETE FROM aula WHERE id_aula = ?`,
-            [aulaId]
-        );
-        if (result.affectedRows === 0) {
+        const success = await aulaDAO.delete(parseInt(aulaId));
+        if (!success) {
             res.status(404).json({ success: false, message: 'Aula não encontrada para exclusão.' });
             return;
         }
