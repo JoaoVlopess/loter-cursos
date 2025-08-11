@@ -9,6 +9,8 @@ import { AdminList } from "../../components/AdminList/AdminList";
 import { EditCursoModal } from "../../components/EditCursoModal/EditCursoModal";
 import { EditProfessorModal } from "../../components/EditProfessorModal/EditProfessorModal";
 import { EditAlunoModal } from "../../components/EditAlunoModal/EditAlunoModal";
+import type { ApiErrorResponse } from "../../services/apiClient";
+import apiClient from "../../services/apiClient";
 
 type AdminView = 'cursos' | 'professores' | 'alunos';
 
@@ -197,121 +199,141 @@ export const AdminArea = () => {
   };
 
   const handleSaveProfessor = async (data: { nome: string; email: string; especialidade?: string; ativo: boolean; cpf?: string; senha?: string; data_nascimento?: string }, professorId?: number) => {
-    const token = localStorage.getItem('authToken');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    if (!token) {
-      setError("Autenticação necessária para salvar.");
-      return;
-    }
-
-    // Campos que o backend espera para criação via createUsuarioByAdmin
-    const professorPayload: typeof data & { tipo: 'PROFESSOR' } = {
-      ...data,
-      tipo: 'PROFESSOR',
-    };    
+    setError(null);
+    setIsLoading(true);
 
     try {
-      if (professorId) { // Atualizar
-        // O endpoint de update /usuarios/:id pode não aceitar 'tipo' ou 'email' diretamente.
-        // Ajuste o payload conforme o que seu endpoint PUT /usuarios/:id aceita.
-        // Ex: delete professorPayload.tipo; delete professorPayload.email; (se não forem atualizáveis)
-        const updateData = { nome: data.nome, especialidade: data.especialidade, ativo: data.ativo, cpf: data.cpf, data_nascimento: data.data_nascimento };
-        const response = await axios.put(`${API_URL_BASE}/usuarios/${professorId}`, updateData, { headers });
-        if (response.data.success) {
-          setProfessoresData(prev => prev.map(p => p.id_usuario === professorId ? { ...p, ...data, id_usuario: professorId, tipo: 'PROFESSOR' } : p));
+        if (professorId) {
+            // --- LÓGICA DE ATUALIZAÇÃO ---
+            const updateData = {
+                nome: data.nome,
+                especialidade: data.especialidade,
+                ativo: data.ativo,
+                cpf: data.cpf,
+                data_nascimento: data.data_nascimento
+            };
+            const response = await apiClient.put(`/usuarios/${professorId}`, updateData);
+
+            if (response.data.success) {
+                setProfessoresData(prev =>
+                    prev.map(p =>
+                        p.id_usuario === professorId
+                            ? { ...p, ...updateData }
+                            : p
+                    )
+                );
+                closeProfessorModal(); // Fecha apenas no sucesso
+            } else {
+                throw new Error(response.data.message || 'Falha ao atualizar professor.');
+            }
         } else {
-          throw new Error(response.data.message || 'Falha ao atualizar professor.');
+            // --- LÓGICA DE CRIAÇÃO (CORRIGIDA) ---
+            if (!data.email || !data.nome || !data.senha) {
+                setError(`Campos obrigatórios (Nome, Email, Senha) não preenchidos.`);
+                setIsLoading(false);
+                return;
+            }
+
+            const professorPayload = { ...data, tipo: 'PROFESSOR' as const };
+            const response = await apiClient.post('/usuarios', professorPayload);
+
+            // --- CORREÇÃO PRINCIPAL AQUI ---
+            // Verifica o id_usuario DENTRO do objeto 'data' da resposta.
+            if (response.data.success && response.data.data && response.data.data.id_usuario) {
+                const novoProfessorDoBackend = response.data.data as (Usuario & { especialidade?: string });
+                setProfessoresData(prev => [...prev, novoProfessorDoBackend]);
+                closeProfessorModal(); // Fecha apenas no sucesso
+            } else {
+                throw new Error(response.data.message || 'Falha ao criar professor.');
+            }
         }
-      } else { // Criar
-        // Para criar, o backend espera: nome, cpf, email, senha, data_nascimento, tipo, especialidade
-        // Certifique-se que o modal coleta todos os campos obrigatórios ou ajuste o backend.
-        // Adicionando validação para CPF e Senha na criação
-        if (!data.email || !data.nome || !data.cpf || !data.senha) {
-            const missingFields = ["Nome", "Email", "CPF", "Senha"].filter(field => 
-                (field === "Nome" && !data.nome) || (field === "Email" && !data.email) || (field === "CPF" && !data.cpf) || (field === "Senha" && !data.senha)
-            ).join(', ');
-            setError(`Campos obrigatórios (${missingFields}) não preenchidos para novo professor.`);
-            return;
+    } catch (error: any) {
+        let errorMessage = "Erro ao salvar professor.";
+        if (error.response && error.response.data) {
+            errorMessage = (error.response.data as ApiErrorResponse).message || error.message;
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
         }
-        const response = await axios.post(`${API_URL_BASE}/usuarios`, professorPayload, { headers });
-        if (response.data.success && response.data.id_usuario) {
-          const novoProfessor = { ...data, id_usuario: response.data.id_usuario, tipo: 'PROFESSOR' } as (Usuario & { especialidade?: string });
-          setProfessoresData(prev => [...prev, novoProfessor]);
-        } else {
-          throw new Error(response.data.message || 'Falha ao criar professor.');
-        }
-      }
-    } catch (error: unknown) {
-      let errorMessage = "Erro ao salvar professor.";
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ApiErrorData>;
-        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar professor.";
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      console.error("Erro ao salvar professor:", error);
-      setError(errorMessage);
+        console.error("Erro ao salvar professor:", error);
+        setError(errorMessage);
+        // Não fecha o modal em caso de erro
     } finally {
-      closeProfessorModal();
+        setIsLoading(false);
     }
-  };
+};
 
   const handleSaveAluno = async (data: { nome: string; email: string; matricula?: string; ativo: boolean; cpf?: string; senha?: string; data_nascimento?: string }, alunoId?: number) => {
-    const token = localStorage.getItem('authToken');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    if (!token) {
-      setError("Autenticação necessária para salvar.");
-      return;
-    }
-
-    // Payload para criar ou atualizar. Para criação, o backend espera cpf, senha, etc.
-    const alunoPayload: Omit<typeof data, 'matricula'> & { tipo: 'ALUNO' } = { // Omit 'matricula' as it's not part of Usuario base
-        ...data,
-        tipo: 'ALUNO', // Necessário se o endpoint de criação for genérico
-    };
+    // A lógica de token e headers será gerenciada pelo apiClient
+    setError(null);
+    setIsLoading(true); // Adicionado para feedback visual
 
     try {
-      if (alunoId) { // Atualizar
-         const updateData = { nome: data.nome, ativo: data.ativo, cpf: data.cpf, data_nascimento: data.data_nascimento }; // Email geralmente não se atualiza assim, ou requer confirmação
-        const response = await axios.put(`${API_URL_BASE}/usuarios/${alunoId}`, updateData, { headers });
-        if (response.data.success) {
-          setAlunosData(prev => prev.map(a => a.id_usuario === alunoId ? { ...a, ...data, id_usuario: alunoId, tipo: 'ALUNO' } : a));
+        if (alunoId) {
+            // --- LÓGICA DE ATUALIZAÇÃO ---
+            const updateData = { 
+                nome: data.nome, 
+                ativo: data.ativo, 
+                cpf: data.cpf, 
+                data_nascimento: data.data_nascimento 
+            };
+            const response = await apiClient.put(`/usuarios/${alunoId}`, updateData);
+
+            if (response.data.success) {
+                setAlunosData(prev => 
+                    prev.map(a => 
+                        a.id_usuario === alunoId 
+                            ? { ...a, ...updateData } 
+                            : a
+                    )
+                );
+                closeAlunoModal(); // Fecha o modal apenas no sucesso
+            } else {
+                throw new Error(response.data.message || 'Falha ao atualizar aluno.');
+            }
         } else {
-          throw new Error(response.data.message || 'Falha ao atualizar aluno.');
+            // --- LÓGICA DE CRIAÇÃO (CORRIGIDA) ---
+            if (!data.email || !data.nome || !data.senha) {
+                setError(`Campos obrigatórios (Nome, Email, Senha) não preenchidos.`);
+                setIsLoading(false);
+                return;
+            }
+            
+            const alunoPayload = { ...data, tipo: 'ALUNO' as const };
+            const response = await apiClient.post('/usuarios', alunoPayload);
+
+            // ==========================================================
+            // ## CORREÇÃO PRINCIPAL AQUI ##
+            // Verifica o id_usuario DENTRO do objeto 'data' da resposta.
+            // ==========================================================
+            if (response.data.success && response.data.data && response.data.data.id_usuario) {
+                const novoAlunoDoBackend = response.data.data; // Objeto usuário retornado pela API
+
+                // Adiciona o novo aluno ao estado local, usando os dados do backend
+                setAlunosData(prev => [...prev, { ...novoAlunoDoBackend, matricula: data.matricula }]);
+                
+                closeAlunoModal(); // Fecha o modal apenas no sucesso
+            } else {
+                // Este 'else' agora só será acionado se a API retornar success: false
+                throw new Error(response.data.message || 'Falha ao criar aluno.');
+            }
         }
-      } else { // Criar
-        // Assumindo que o backend /usuarios (createUsuarioByAdmin) foi atualizado para aceitar tipo 'ALUNO'
-        // e espera nome, cpf, email, senha, data_nascimento, tipo.
-        if (!alunoPayload.email || !alunoPayload.nome || !alunoPayload.cpf || !alunoPayload.senha) {
-            const missingFields = ["Nome", "Email", "CPF", "Senha"].filter(field =>
-                (field === "Nome" && !alunoPayload.nome) || (field === "Email" && !alunoPayload.email) ||
-                (field === "CPF" && !alunoPayload.cpf) || (field === "Senha" && !alunoPayload.senha)
-            ).join(', ');
-            setError(`Campos obrigatórios (${missingFields}) não preenchidos para novo aluno.`);
-            return; // Não fecha o modal, permite ao usuário corrigir
+    } catch (error: any) {
+        let errorMessage = "Erro ao salvar aluno.";
+        if (error.response && error.response.data) {
+            const apiError = error.response.data as ApiErrorResponse;
+            errorMessage = apiError.message || error.message;
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
         }
-        const response = await axios.post(`${API_URL_BASE}/usuarios`, alunoPayload, { headers });
-        if (response.data.success && response.data.id_usuario) {
-          const novoAluno = { ...data, id_usuario: response.data.id_usuario, tipo: 'ALUNO' } as (Usuario & { matricula?: string; cpf?: string });
-          setAlunosData(prev => [...prev, novoAluno]);
-        } else {
-          throw new Error(response.data.message || 'Falha ao criar aluno.');
-        }
-      }
-    } catch (error: unknown) {
-      let errorMessage = "Erro ao salvar aluno.";
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ApiErrorData>;
-        errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro do servidor ao salvar aluno.";
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      console.error("Erro ao salvar aluno:", error);
-      setError(errorMessage);
+        console.error("Erro ao salvar aluno:", error);
+        setError(errorMessage);
+        // Não fechamos o modal em caso de erro, para que o usuário possa corrigir
     } finally {
-      closeAlunoModal();
+        setIsLoading(false); // Para o loading, independentemente do resultado
+        // A chamada para closeAlunoModal() foi removida daqui
     }
-  };
+};
+
 
   // --- Delete Handlers (called by modals or by AdminList's onDeleteItem) ---
   const handleDeleteCursoById = async (idCurso: number) => {

@@ -68,7 +68,13 @@ export const createAula = async (req: AuthRequest, res: Response, next: NextFunc
             return;
         }
         
-        const novaAulaId = await aulaDAO.create(parseInt(moduloId), { titulo, descricao, ordem });
+        const novaAulaId = await aulaDAO.create(parseInt(moduloId), {
+            titulo,
+            descricao,
+            conteudo,
+            duracao,
+            ordem
+        });
 
         res.status(201).json({
             success: true,

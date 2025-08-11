@@ -1,14 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
-import usuarioDAO from '../dao/usuarioDAO'; // <-- Importa o DAO
+import { pool } from '../database'; // Importa o pool de conexões
 import { AuthRequest } from '../middlewares/authMiddleware';
+import bcrypt from 'bcrypt';
+import { RowDataPacket } from 'mysql2'; // Importe para tipagem
+
+const SALT_ROUNDS = 10;
 
 /**
  * @route   GET /usuarios
  */
 export const getAllUsuarios = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const usuarios = await usuarioDAO.findAllWithDetails();
-        res.json({ success: true, data: usuarios });
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo, u.tipo, p.id_professor, p.especialidade, a.cargo
+             FROM usuario u
+             LEFT JOIN professor p ON u.id_usuario = p.id_usuario AND u.tipo = 'PROFESSOR'
+             LEFT JOIN administrador a ON u.id_usuario = a.id_usuario AND u.tipo = 'ADMIN'
+             ORDER BY u.nome ASC`
+        );
+        res.json({ success: true, data: rows });
     } catch (err: any) {
         next(err);
     }
@@ -19,8 +29,13 @@ export const getAllUsuarios = async (req: AuthRequest, res: Response, next: Next
  */
 export const getAllAlunos = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const alunos = await usuarioDAO.findActivesByType('ALUNO');
-        res.json({ success: true, data: alunos });
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo
+             FROM usuario u
+             WHERE u.tipo = 'ALUNO' AND u.ativo = TRUE
+             ORDER BY u.nome ASC`
+        );
+        res.json({ success: true, data: rows });
     } catch (err: any) {
         console.error("Erro ao buscar todos os alunos:", err);
         next(err);
@@ -32,8 +47,14 @@ export const getAllAlunos = async (req: AuthRequest, res: Response, next: NextFu
  */
 export const getAllProfessores = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const professores = await usuarioDAO.findActivesByType('PROFESSOR');
-        res.json({ success: true, data: professores });
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo, p.id_professor, p.especialidade
+             FROM usuario u
+             INNER JOIN professor p ON u.id_usuario = p.id_usuario
+             WHERE u.ativo = TRUE
+             ORDER BY u.nome ASC`
+        );
+        res.json({ success: true, data: rows });
     } catch (err: any) {
         console.error("Erro ao buscar todos os professores:", err);
         next(err);
@@ -46,13 +67,19 @@ export const getAllProfessores = async (req: AuthRequest, res: Response, next: N
 export const getUsuarioById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { id } = req.params;
     try {
-        // Lógica de permissão (ex: Admin ou próprio usuário) deve ficar aqui
-        const usuario = await usuarioDAO.findById(parseInt(id));
-        if (!usuario) {
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT u.id_usuario, u.nome, u.email, u.ativo, u.tipo, u.cpf, u.data_nascimento, p.especialidade, a.cargo
+             FROM usuario u
+             LEFT JOIN professor p ON u.id_usuario = p.id_usuario AND u.tipo = 'PROFESSOR'
+             LEFT JOIN administrador a ON u.id_usuario = a.id_usuario AND u.tipo = 'ADMIN'
+             WHERE u.id_usuario = ?`,
+            [id]
+        );
+        if (rows.length === 0) {
             res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
             return;
         }
-        res.json({ success: true, data: usuario });
+        res.json({ success: true, data: rows[0] });
     } catch (err: any) {
         next(err);
     }
@@ -60,18 +87,69 @@ export const getUsuarioById = async (req: AuthRequest, res: Response, next: Next
 
 /**
  * @route   POST /usuarios
- * @desc    OBS: Esta função é idêntica à cadastrarUsuario do auth.controller.
- * Considere unificar ou usar a do auth.controller para todas as criações.
- * Mantida aqui para seguir a refatoração do seu arquivo.
+ * @desc    Admin cria um novo usuário (Aluno, Professor ou Admin).
  */
 export const createUsuarioByAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Esta lógica é complexa e já foi implementada no auth.controller com hashing.
-    // O ideal é ter uma única função de criação de usuário.
-    // Vamos redirecionar para a lógica já refatorada em auth.controller:
-    // import { cadastrarUsuario } from './auth.controller';
-    // export const createUsuarioByAdmin = cadastrarUsuario;
-    // Se precisar de uma lógica diferente para o Admin, implemente aqui.
-    res.status(501).json({ message: 'Funcionalidade duplicada. Use POST /auth/cadastro ou uma rota admin específica.' });
+    const { nome, cpf, email, senha, data_nascimento, tipo, especialidade, cargo } = req.body;
+
+    if (!nome || !email || !senha || !tipo) {
+        res.status(400).json({ success: false, message: 'Nome, email, senha e tipo são obrigatórios.' });
+        return;
+    }
+    if (!['ALUNO', 'PROFESSOR', 'ADMIN'].includes(tipo)) {
+        res.status(400).json({ success: false, message: 'Tipo de usuário inválido.' });
+        return;
+    }
+    if (tipo === 'PROFESSOR' && !especialidade) {
+        res.status(400).json({ success: false, message: 'Especialidade é obrigatória para Professor.' });
+        return;
+    }
+    if (tipo === 'ADMIN' && !cargo) {
+        res.status(400).json({ success: false, message: 'Cargo é obrigatório para Admin.' });
+        return;
+    }
+
+    let connection: any;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        const [existing]: any[] = await connection.execute(`SELECT id_usuario FROM usuario WHERE email = ?`, [email]);
+        if (existing.length > 0) {
+            await connection.rollback(); connection.release();
+            res.status(409).json({ success: false, message: 'Email já cadastrado.' }); return;
+        }
+        
+        const hashed = await bcrypt.hash(senha, SALT_ROUNDS);
+        
+        const [result]: any = await connection.execute(
+            `INSERT INTO usuario (nome, cpf, email, senha, data_nascimento, tipo) VALUES (?, ?, ?, ?, ?, ?)`,
+            [nome, cpf || null, email, hashed, data_nascimento || null, tipo]
+        );
+        const id_usuario = result.insertId;
+
+        if (tipo === 'PROFESSOR') {
+            await connection.execute(`INSERT INTO professor (id_usuario, especialidade) VALUES (?, ?)`, [id_usuario, especialidade]);
+        } else if (tipo === 'ADMIN') {
+            await connection.execute(`INSERT INTO administrador (id_usuario, cargo) VALUES (?, ?)`, [id_usuario, cargo]);
+        } else if (tipo === 'ALUNO') {
+            await connection.execute(`INSERT INTO aluno (id_usuario) VALUES (?)`, [id_usuario]);
+        }
+        
+        await connection.commit();
+        
+        const [newUserRows]: any[] = await connection.execute(`SELECT * FROM usuario WHERE id_usuario = ?`, [id_usuario]);
+        const { senha: _, ...usuarioSemSenha } = newUserRows[0]; // Remove a senha do retorno
+
+        connection.release();
+        res.status(201).json({ success: true, data: usuarioSemSenha, message: `Usuário ${tipo} criado com sucesso.` });
+
+    } catch (err: any) {
+        if (connection) {
+            try { await connection.rollback(); connection.release(); } catch (rbError) { console.error("Erro no rollback:", rbError); }
+        }
+        next(err);
+    }
 };
 
 /**
@@ -81,45 +159,54 @@ export const updateUsuario = async (req: AuthRequest, res: Response, next: NextF
     const { id } = req.params;
     const { nome, cpf, data_nascimento, ativo, especialidade, cargo } = req.body;
 
-    // Validação da entrada (aqui é um bom lugar para isso)
-    if (typeof nome !== 'string' || typeof ativo !== 'boolean') {
-        res.status(400).json({ success: false, message: 'Nome e status ativo são obrigatórios e devem ter os tipos corretos.' });
-        return;
+    if (nome === undefined || ativo === undefined) {
+       res.status(400).json({ success: false, message: 'Nome e status ativo são obrigatórios.' });
+       return;
     }
     
+    let connection: any;
     try {
-        // Lógica de permissão para update (quem pode atualizar quem?) deve vir aqui
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        // O objeto criado aqui agora corresponde ao que o DAO espera
-        const success = await usuarioDAO.update(parseInt(id, 10), { 
-            nome, 
-            cpf, 
-            data_nascimento, 
-            ativo, 
-            especialidade, 
-            cargo 
-        });
-
-        if (!success) {
-            res.status(404).json({ success: false, message: 'Usuário não encontrado para atualização.' });
-            return;
+        const [updateResult]: any = await connection.execute(
+            `UPDATE usuario SET nome = ?, cpf = ?, data_nascimento = ?, ativo = ? WHERE id_usuario = ?`,
+            [nome, cpf, data_nascimento, ativo, id]
+        );
+        
+        if (updateResult.affectedRows === 0) {
+            await connection.rollback(); connection.release();
+            res.status(404).json({ success: false, message: 'Usuário não encontrado para atualização.' }); return;
         }
+
+        if (especialidade !== undefined) {
+             await connection.execute(`UPDATE professor SET especialidade = ? WHERE id_usuario = ?`, [especialidade, id]);
+        }
+        if (cargo !== undefined) {
+             await connection.execute(`UPDATE administrador SET cargo = ? WHERE id_usuario = ?`, [cargo, id]);
+        }
+
+        await connection.commit();
+        connection.release();
         res.json({ success: true, message: 'Usuário atualizado com sucesso.' });
     } catch (err: any) {
-        // ... seu tratamento de erro ...
+        if (connection) { try { await connection.rollback(); connection.release(); } catch (rbError) { console.error(rbError); } }
         next(err);
     }
 };
 
 /**
- * @route   DELETE /usuarios/:id
+ * @route    DELETE /usuarios/:id
  */
 export const deleteUsuario = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { id } = req.params;
     try {
-        // Lógica de permissão para delete deve vir aqui
-        const success = await usuarioDAO.deactivate(parseInt(id));
-        if (!success) {
+        // Soft delete: apenas desativa o usuário
+        const [result]: any = await pool.execute(
+            `UPDATE usuario SET ativo = FALSE WHERE id_usuario = ?`,
+            [id]
+        );
+        if (result.affectedRows === 0) {
             res.status(404).json({ success: false, message: 'Usuário não encontrado para desativar.' });
             return;
         }
