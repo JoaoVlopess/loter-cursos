@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { NavBar } from '../../components/NavBar/Navbar';
 import apiClient from '../../services/apiClient';
 import type { ApiErrorResponse as ApiGenericErrorResponse } from '../../services/apiClient'; // Renomeado para evitar conflito
 import styles from './ProfessorEditPage.module.css';
@@ -190,51 +191,54 @@ export const ProfessorEditPage = () => {
     };
 
     return (
-        <div className={styles.container}>
-            <h1 className={styles.pageTitle}>
-                Gerenciamento do Curso: {isLoadingPage ? 'Carregando...' : (cursoTitulo || `ID ${cursoIdFromParams}`)}
-            </h1>
-            <div className={styles.header}>
-                <FormButton onClick={handleOpenAddModuloModal} disabled={isLoadingPage || !!error}>
-                    + Adicionar Módulo
-                </FormButton>
+        <div className={styles.page_container}>
+            <NavBar />
+            <div className={styles.container}>
+                <h1 className={styles.pageTitle}>
+                    Gerenciamento do Curso: {isLoadingPage ? 'Carregando...' : (cursoTitulo || `ID ${cursoIdFromParams}`)}
+                </h1>
+                <div className={styles.header}>
+                    <FormButton onClick={handleOpenAddModuloModal} disabled={isLoadingPage || !!error}>
+                        + Adicionar Módulo
+                    </FormButton>
+                </div>
+                {isLoading && <p className={styles.loadingMessage}>Processando...</p>}
+                {error && !isLoadingPage && <p className={styles.errorMessage}>Erro: {error}</p>}
+
+                {isLoadingPage && <p className={styles.loadingMessage}>Carregando dados do curso...</p>}
+                {!isLoadingPage && !error && modulos.length === 0 && <p>Nenhum módulo encontrado.</p>}
+                
+                <ModulosList
+                    modulos={modulos}
+                    onEditModulo={handleOpenEditModal}
+                    onAddAula={handleOpenAddAulaModal}
+                    onEditAula={handleOpenEditAulaModal}
+                    onDeleteModulo={handleDeleteModulo} 
+                    onDeleteAula={handleDeleteAula}
+                />
+
+                {isModuloModalOpen && (
+                    <EditModuloModal
+                        isOpen={isModuloModalOpen}
+                        onClose={handleCloseModuloModal}
+                        modulo={editingModulo}
+                        onSave={(data) => handleSaveModulo(data)}
+                        nextOrdem={nextModuloOrdem}
+                        onDelete={handleDeleteModulo}
+                    />
+                )}
+                {isAulaModalOpen && currentModuloIdForAula !== null && (
+                    <EditAulaModal
+                        isOpen={isAulaModalOpen}
+                        onClose={handleCloseAulaModal}
+                        onSave={(data, id) => handleSaveAula(data, id)}
+                        aula={editingAula}
+                        idModulo={currentModuloIdForAula}
+                        nextOrdem={nextAulaOrdemInModal}
+                        onDelete={(aulaId) => handleDeleteAula(aulaId, currentModuloIdForAula)}
+                    />
+                )}
             </div>
-            {isLoading && <p className={styles.loadingMessage}>Processando...</p>}
-            {error && !isLoadingPage && <p className={styles.errorMessage}>Erro: {error}</p>}
-
-            {isLoadingPage && <p className={styles.loadingMessage}>Carregando dados do curso...</p>}
-            {!isLoadingPage && !error && modulos.length === 0 && <p>Nenhum módulo encontrado.</p>}
-            
-            <ModulosList
-                modulos={modulos}
-                onEditModulo={handleOpenEditModal}
-                onAddAula={handleOpenAddAulaModal}
-                onEditAula={handleOpenEditAulaModal}
-                onDeleteModulo={handleDeleteModulo} 
-                onDeleteAula={handleDeleteAula}
-            />
-
-            {isModuloModalOpen && (
-                <EditModuloModal
-                    isOpen={isModuloModalOpen}
-                    onClose={handleCloseModuloModal}
-                    modulo={editingModulo}
-                    onSave={(data) => handleSaveModulo(data)}
-                    nextOrdem={nextModuloOrdem}
-                    onDelete={handleDeleteModulo}
-                />
-            )}
-            {isAulaModalOpen && currentModuloIdForAula !== null && (
-                <EditAulaModal
-                    isOpen={isAulaModalOpen}
-                    onClose={handleCloseAulaModal}
-                    onSave={(data, id) => handleSaveAula(data, id)}
-                    aula={editingAula}
-                    idModulo={currentModuloIdForAula}
-                    nextOrdem={nextAulaOrdemInModal}
-                    onDelete={(aulaId) => handleDeleteAula(aulaId, currentModuloIdForAula)}
-                />
-            )}
         </div>
     );
 };

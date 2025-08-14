@@ -1,12 +1,20 @@
+.page_container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* A cor de fundo será herdada ou definida globalmente, mantendo o estilo original. */
+}
+
 .container {
   padding: 2rem 5rem; /* Ajustado padding superior/inferior */
-  height: 100vh; /* Garante que o container ocupe toda a altura da viewport */
+  flex-grow: 1; /* Faz o container principal crescer para preencher o espaço */
   margin: 0 auto;
   color: #ffffff; /* Cor do texto para contraste */
   display: flex;
   flex-direction: column; /* Empilha os filhos verticalmente */
-  overflow: hidden; /* Impede o scroll na página principal */
+  overflow-y: auto; /* Permite scroll vertical se o conteúdo exceder a altura */
   box-sizing: border-box; /* Garante que padding não aumente o tamanho total */
+  width: 100%;
 }
 
 .pageTitle { /* Renomeado de .title para .pageTitle para clareza */
