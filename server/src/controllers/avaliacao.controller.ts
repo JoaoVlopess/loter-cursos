@@ -8,6 +8,7 @@ import usuarioDAO from '../dao/usuarioDAO'; // Precisamos dele para buscar id_al
 // =============================================================================
 export const createAvaliacao = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const id_usuario_logado = req.usuario?.id_usuario;
+    const id_aluno_logado = req.usuario?.id_aluno; // <-- Pega o id_aluno diretamente do token
     const { id_curso, id_modulo, id_aula, nota, feedback } = req.body;
 
     if (!id_usuario_logado) {
@@ -26,20 +27,29 @@ export const createAvaliacao = async (req: AuthRequest, res: Response, next: Nex
     }
 
     try {
-        const usuario = await usuarioDAO.findByEmail(req.usuario!.email); // Busca usuário completo para pegar id_aluno
-        if (!usuario || !usuario.id_aluno) {
+        // O id_aluno agora vem diretamente do token JWT, verificado pelo middleware.
+        if (!id_aluno_logado) {
             res.status(403).json({ success: false, message: 'Apenas alunos podem fazer avaliações.' });
             return;
         }
-        const id_aluno = usuario.id_aluno;
 
-        const jaAvaliou = await avaliacaoDAO.findExisting(id_aluno, { id_curso, id_modulo, id_aula });
+        const jaAvaliou = await avaliacaoDAO.findExisting(id_aluno_logado, { id_curso, id_modulo, id_aula });
         if (jaAvaliou) {
             res.status(409).json({ success: false, message: 'Você já avaliou este item.' });
             return;
         }
 
-        const novaAvaliacaoId = await avaliacaoDAO.create({ id_aluno, id_curso, id_modulo, id_aula, nota, feedback });
+        // Constrói o objeto de dados apenas com as propriedades definidas
+        const avaliacaoData = {
+            id_aluno: id_aluno_logado,
+            nota,
+            feedback,
+            ...(id_curso && { id_curso }),
+            ...(id_modulo && { id_modulo }),
+            ...(id_aula && { id_aula }),
+        };
+
+        const novaAvaliacaoId = await avaliacaoDAO.create(avaliacaoData);
         res.status(201).json({ success: true, id_avaliacao: novaAvaliacaoId, message: 'Avaliação registrada com sucesso.' });
 
     } catch (err: any) {
@@ -90,6 +100,7 @@ export const getAvaliacaoById = async (req: Request, res: Response, next: NextFu
 export const updateAvaliacao = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { avaliacaoId } = req.params;
     const id_usuario_logado = req.usuario?.id_usuario;
+    const id_aluno_logado = req.usuario?.id_aluno; // <-- Pega o id_aluno diretamente do token
     const { nota, feedback } = req.body;
 
     if (!id_usuario_logado) {
@@ -99,14 +110,12 @@ export const updateAvaliacao = async (req: AuthRequest, res: Response, next: Nex
     // Adicione validações de nota e feedback aqui se necessário
 
     try {
-        const usuario = await usuarioDAO.findByEmail(req.usuario!.email);
-        if (!usuario || !usuario.id_aluno) {
+        if (!id_aluno_logado) {
             res.status(403).json({ success: false, message: 'Apenas alunos podem modificar avaliações.' });
             return;
         }
-        const id_aluno = usuario.id_aluno;
 
-        const success = await avaliacaoDAO.update(parseInt(avaliacaoId), id_aluno, { nota, feedback });
+        const success = await avaliacaoDAO.update(parseInt(avaliacaoId), id_aluno_logado, { nota, feedback });
         if (!success) {
             res.status(404).json({ success: false, message: 'Avaliação não encontrada ou não pertence a este aluno.' });
             return;
@@ -124,6 +133,7 @@ export const updateAvaliacao = async (req: AuthRequest, res: Response, next: Nex
 export const deleteAvaliacao = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { avaliacaoId } = req.params;
     const tipo_usuario_logado = req.usuario?.tipo;
+    const id_aluno_logado = req.usuario?.id_aluno; // <-- Pega o id_aluno diretamente do token
 
     try {
         let success = false;
@@ -132,12 +142,11 @@ export const deleteAvaliacao = async (req: AuthRequest, res: Response, next: Nex
             success = await avaliacaoDAO.delete(parseInt(avaliacaoId));
         } else {
             // Aluno só pode deletar a própria avaliação
-            const usuario = await usuarioDAO.findByEmail(req.usuario!.email);
-            if (!usuario || !usuario.id_aluno) {
+            if (!id_aluno_logado) {
                 res.status(403).json({ success: false, message: 'Usuário não é um aluno válido para deletar avaliações.' });
                 return;
             }
-            success = await avaliacaoDAO.delete(parseInt(avaliacaoId), usuario.id_aluno);
+            success = await avaliacaoDAO.delete(parseInt(avaliacaoId), id_aluno_logado);
         }
 
         if (!success) {

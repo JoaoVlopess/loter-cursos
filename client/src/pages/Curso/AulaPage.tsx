@@ -166,23 +166,29 @@ export const AulaPage = () => {
       </div>
 
       <div className={styles.videoWrapper}>
-        {/* Idealmente, aula.conteudo teria a URL do vídeo.
-            Você pode usar um player de vídeo real aqui (ex: react-player)
-            ou um iframe se for um link do YouTube/Vimeo.
-        */}
-        {aula.conteudo ? (
-           <iframe
-             className={styles.videoPlayer}
-             src={aula.conteudo.includes("youtube.com/embed") ? aula.conteudo : `https://www.youtube.com/embed/${aula.conteudo}`} // Exemplo para links do YouTube
-             title={aula.titulo}
-             frameBorder="0"
-             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-             allowFullScreen
-           ></iframe>
-        ) : (
-          <img src="/img/comingSoon.jpg" alt="Vídeo em breve" className={styles.videoPlayer} />
-        )}
-      </div>
+  {aula.conteudo ? (
+    <iframe
+      className={styles.videoPlayer}
+      src={(() => {
+        // Extrai o ID do vídeo a partir da URL recebida
+        const match = aula.conteudo.match(
+          /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/
+        );
+        return match ? `https://www.youtube.com/embed/${match[1]}` : "";
+      })()}
+      title={aula.titulo}
+      frameBorder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+    ></iframe>
+  ) : (
+    <img
+      src="/img/comingSoon.jpg"
+      alt="Vídeo em breve"
+      className={styles.videoPlayer}
+    />
+  )}
+</div>
 
       <div className={styles.description}>
         <h2>Descrição da aula</h2>
